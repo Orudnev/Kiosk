@@ -78,7 +78,7 @@ function Navigator() {
     return state.AppSettings;
   });
   useEffect(() => {
-    if (appset.url !== location.pathname) {
+    if (appset.url !== location.pathname && appset.url != "/") {
       navigate(appset.url);
     }
   }, [appset]);
@@ -99,7 +99,7 @@ function App() {
         {AllScenarioItems.map((itm: any, index) => {
           let props = itm.props;
           let url = `/${props.scnUid}_${props.scnItemUid}`;
-          return (<Route key={"route" + index} element={itm} path={"/"} />)
+          return (<Route key={"route" + index} element={itm} path={url} />)
         })}
       </Routes>
     </div>

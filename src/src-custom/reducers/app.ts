@@ -54,7 +54,7 @@ const appReducer:Reducer<IAppSettings,TAppAction> = (state = initAppSettings, ac
     switch (typedAction.type) {
         case 'ActNavigate': 
              newState.url = typedAction.url;
-             console.log(newState.url);
+             console.log(`ActNavigate:${newState.url}`);
              return newState;
     }
     return state;

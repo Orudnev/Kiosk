@@ -92,6 +92,7 @@ export class StepBase extends React.Component<IStepBaseProps, any> {
             let styleInfo = GetIconClass(btnId);
             let navBtn =
                 <ButtonBase 
+                    key={btnId}
                     onClick={()=>{return ""}}
                     btnId={btnId} btnStyleType='nav-button'
                     getChildren={(pressed)=>{
