@@ -19,7 +19,12 @@
     "electron-reload": "^1.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-redux": "^8.0.5",
+    "react-router-dom": "^6.8.0",
     "react-scripts": "5.0.1",
+    "redux": "^4.2.1",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-thunk": "^2.4.2",
     "typescript": "^4.9.5",
     "web-vitals": "^3.1.1"
   },
@@ -28,7 +33,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "postinstall": "electron-builder install-app-deps",
-    "electron:dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://127.0.0.1:3000 && tsc -p electron -w\" \"wait-on http://127.0.0.1:3000 && tsc -p electron && electron .\"",
+    "electron:dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron . --remote-debugging-port=9223\"",
     "electron:build": "yarn build && tsc -p electron && electron-builder",
     "eject": "react-scripts eject"
   },
@@ -64,6 +69,7 @@
     "cross-env": "^7.0.3",
     "electron": "^23.3.13",
     "electron-builder": "^23.6.0",
+    "sass": "^1.71.1",
     "wait-on": "^7.0.1"
   }
 }

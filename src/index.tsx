@@ -1,14 +1,26 @@
+import './src-custom/CSS/main.scss';
+import './src-custom/CSS/images.scss';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
+import App from './app';
+import { Provider } from 'react-redux';
+
+
+import { HashRouter} from 'react-router-dom'
 import reportWebVitals from './reportWebVitals';
+import { store } from './src-custom/reducers'; 
+
+
+//"concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://127.0.0.1:3000 && electron . --inspect=5858  --remote-debugging-port=9223\""
+//"electron:dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://127.0.0.1:3000 && tsc -p electron -w\" \"wait-on http://127.0.0.1:3000 && tsc -p electron && electron .\"",
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <Provider store={store}>
+      <HashRouter>
+        <App />
+      </HashRouter>
+  </Provider>
 );
 
 // If you want to start measuring performance in your app, pass a function
