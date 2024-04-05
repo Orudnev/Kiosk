@@ -18,10 +18,10 @@ export type TScenarioItemUid =
 function GetAllScenarioItems():ReactNode[]{
     let rv=[
         ...ScnSelectService,
-        ...ScnConfig,
+        //...ScnConfig,
     ];
     return rv; 
 }
 
 const AllScenarioItems = GetAllScenarioItems();
-export default AllScenarioItems;
+export default AllScenarioItems; 

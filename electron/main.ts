@@ -1,7 +1,7 @@
-import { app, session, BrowserWindow, ipcMain  } from 'electron';
+import { app, session, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import installExtension, { REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
-
+import {HandleOneWayCall, HandleTwoWayCall} from './api';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -16,7 +16,7 @@ function createWindow() {
     }
   });
 
-  ipcMain.on('set-title', handleSetTitle);
+  //ipcMain.on('set-title', handleSetTitle);
 
   if (app.isPackaged) {
     // 'build/index.html'
@@ -26,15 +26,15 @@ function createWindow() {
 
     win.webContents.once("dom-ready", async () => {
       await installExtension([REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS])
-          .then((name) => console.log(`Added Extension:  ${name}`))
-          .catch((err) => console.log("An error occurred: ", err))
-          .finally(() => {
-              win.webContents.openDevTools();
-          });
-    win.webContents.openDevTools();
+        .then((name) => console.log(`Added Extension:  ${name}`))
+        .catch((err) => console.log("An error occurred: ", err))
+        .finally(() => {
+          win.webContents.openDevTools();
+        });
+      win.webContents.openDevTools();
 
-  });
- 
+    });
+
     // Hot Reloading on 'node_modules/.bin/electronPath'
     require('electron-reload')(__dirname, {
       electron: path.join(__dirname,
@@ -47,12 +47,12 @@ function createWindow() {
       hardResetMethod: 'exit'
     });
   }
-} 
+}
 
-app.whenReady().then(() => { 
-
+app.whenReady().then(() => {
+  ipcMain.handle('oneWayCall',HandleOneWayCall);
+  ipcMain.handle('twoWayCall',HandleTwoWayCall);
   createWindow();
-
 });
 
 app.on('activate', () => {
@@ -67,11 +67,4 @@ app.on('window-all-closed', () => {
   }
 });
 
-
-
-function handleSetTitle (event:any, title:string) {
-  const webContents = event.sender;
-  const win = BrowserWindow.fromWebContents(webContents);
-  win?.setTitle(title);
-}
 

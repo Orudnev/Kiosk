@@ -5,23 +5,24 @@ import { GetIconClass, TLang } from '../../common-types';
 import { TScenarioUid, TScenarioItemUid } from '../../src-custom/scn-custom';
 import { ButtonBase } from '../../src-custom/components/button-base';
 import { TLButton,GetLocRes } from '../../localization';
+import { IScnItemBaseProps, ScnItemBase } from './scn-base';
 
 export interface IStepBaseProps {
-    scnUid: TScenarioUid;
-    scnItemUid: TScenarioItemUid;
+    //scnUid: TScenarioUid;
+    //scnItemUid: TScenarioItemUid;
     stepTimeout?: number;
     messageId?: string; //2do заменить string на enum
     buttons?: string;
     btnFunc?: (jsxComponentContext: any) => string;
-    defaultButtons?: string;
     messageFunc?: (JSXContext: any) => string;
     messageText?: string;
-    dataSource?: any;
+    scnItem: ScnItemBase;
 }
 
 type TRenderDisabledButtonMode = 'hide' | 'disable';
 
 export class StepBase extends React.Component<IStepBaseProps, any> {
+    timerId: NodeJS.Timeout | undefined = undefined;
     disableTimeout = false;
     renderDisabledButtonsMode: TRenderDisabledButtonMode = 'disable';
     constructor(props: IStepBaseProps) {
@@ -31,8 +32,10 @@ export class StepBase extends React.Component<IStepBaseProps, any> {
             navigationStarted: false,
             showWaitIndicator: false
         };
+        this.onAnyClick = this.onAnyClick.bind(this);
         this.handleAnyClick = this.handleAnyClick.bind(this);
         this.handleTimerTick = this.handleTimerTick.bind(this);
+        this.props.scnItem.handleStepEvent('Init',this)
     }
 
     componentDidMount() {
@@ -40,7 +43,6 @@ export class StepBase extends React.Component<IStepBaseProps, any> {
             this.startTimeout();
         }
     }
-
 
     handleAnyClick() {
 
@@ -53,6 +55,13 @@ export class StepBase extends React.Component<IStepBaseProps, any> {
     handleChangeLang(lang: TLang) {
     }
 
+    resetTimeout() {
+        if (this.timerId) {
+            clearTimeout(this.timerId);
+            this.timerId = undefined;
+        }
+        this.startTimeout();
+    }    
 
     startTimeout() {
         if (!this.disableTimeout) {
@@ -60,6 +69,12 @@ export class StepBase extends React.Component<IStepBaseProps, any> {
             //this.timerId = setTimeout(this.handleTimerTick, sec * 1000);
         }
     }
+
+    onAnyClick() {
+        if (this.timerId) {
+            this.resetTimeout();
+        }
+    }    
 
     renderHeader(): JSX.Element {
         return (
