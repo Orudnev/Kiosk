@@ -1,21 +1,21 @@
+import { TApiOneWayCall, TApiTwoWayCall } from "./apiTypes";
 
-function MakeOneWayCall(payload:object):void{
+function MakeOneWayCall(payload:TApiOneWayCall):void{
     (window as any).electronAPI.oneWayCall(payload);
 }
-async function MakeTwoWayCall(payload:object){
+async function MakeTwoWayCall(payload:TApiTwoWayCall){
     return (window as any).electronAPI.twoWayCall(payload);
 }
 
-export interface IProfileItem{
-    id: number,
-    name: string,
-    description: string,
-    key: string,
-    scenario: string,
-    "parentId": number,
-    "isActive": true,
-    regexMask: string,
-    serviceId: number,
+export interface IProfileItemDTO {
+    id: string;
+    name?: string;
+    description?: string;
+    scenario: string;
+    parentId?: string;
+    image?: string;
+    requisitesName: string;
+    requisitesMask?: string;
 }
 
 export interface IOtherItem{
@@ -34,8 +34,13 @@ class ApiWrapperClass{
         MakeOneWayCall({method:'SetTitle',title:newTitle});
     }
 
-    GetProfile():Promise<ICommonReslult<IProfileItem[]>>{
+    GetProfile():Promise<ICommonReslult<IProfileItemDTO[]>>{
         let result = MakeTwoWayCall({method:'GetProfile'});
+        return result;
+    }
+
+    GetFileResource(fileName:string):Promise<string>{
+        let result = MakeTwoWayCall({method:'GetFileResource',filePath:fileName});
         return result;
     }
 

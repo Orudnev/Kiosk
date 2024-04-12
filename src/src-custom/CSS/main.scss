@@ -206,7 +206,25 @@ body{
 
 
 
+// background: linear-gradient(180deg, #55317E 0%, #2F2A85 100%);
+// @include nav-button-basic;
+// color: white;
+// font-family: 'Inter';
+// font-style: normal;
+// font-weight: 600;
+// font-size: 24px;
+// line-height: 29px;
+// color:white;  
+
+
 .nav-button__disabled {
+    @include nav-button-basic;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 29px;
+    color:white;
     background: #E0E0E0;
     .navbtn-label-btnBack,.navbtn-label-btnHome,.navbtn-label-btnNext{
         color:#BDBDBD;
@@ -217,7 +235,6 @@ body{
     .navb-img-home{
         fill:#BDBDBD;
     }    
-    @include nav-button-basic;
 }
 
 

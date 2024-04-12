@@ -97,7 +97,7 @@ function App() {
       <Navigator />
       <Routes>
         {AllScenarioItems.map((itm: any, index) => {
-          let props = itm.props as IStepBaseProps;
+          let props = itm.props;
           let url = `/${props.scnItem.props.scnUid}_${props.scnItem.props.scnItemUid}`;
           return (<Route key={"route" + index} element={itm} path={url} />)
         })}

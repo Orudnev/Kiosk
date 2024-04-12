@@ -44,7 +44,7 @@ export class ScnItemBase{
                 this.init({...args});
                 break;
             case 'DidMount':
-                this.didMount();
+                this.didMount({...args});
                 break;
             default:
         }
@@ -55,7 +55,7 @@ export class ScnItemBase{
         this.launchInlineHandler('Init',stepInstance);
     }
 
-    didMount(){
-        this.launchInlineHandler('DidMount',undefined);
+    didMount(stepInstance:any){
+        this.launchInlineHandler('DidMount',stepInstance);
     }
 } 

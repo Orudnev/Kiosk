@@ -1,39 +1,43 @@
 import {BrowserWindow } from 'electron';
 import {ICommonReslult} from '../src/apiwrapper';
+import * as path from 'path';
+import fs = require('fs');
+import {TApiOneWayCall,TApiTwoWayCall} from '../src/apiTypes';
 
-function MakeOneWayCall(payload:object):void{
-    (window as any).electronAPI.oneWayCall(payload);
-}
-async function MakeTwoWayCall(payload:object){
-    return (window as any).electronAPI.twoWayCall(payload);
-}
+// function MakeOneWayCall(payload:object):void{
+//     (window as any).electronAPI.oneWayCall(payload);
+// }
+// async function MakeTwoWayCall(payload:object){
+//     return (window as any).electronAPI.twoWayCall(payload);
+// }
 
 export interface IProfileItem{
     prop1:string;
 }
 
-export interface IOtherItem{
-    prop2:boolean;
-}
+// export interface IOtherItem{
+//     prop2:boolean;
+// }
 
 
-class ApiWrapperClass{
-    SetTitle(newTitle:string){
-        MakeOneWayCall({method:'SetTitle',title:newTitle});
-    }
+// class ApiWrapperClass{
+//     SetTitle(newTitle:string){
+//         MakeOneWayCall({method:'SetTitle',title:newTitle});
+//     }
 
-    GetProfile():Promise<ICommonReslult<IProfileItem[]>>{
-        let result = MakeTwoWayCall({method:'GetProfile'});
-        return result;
-    }
+//     GetProfile():Promise<ICommonReslult<IProfileItem[]>>{
+//         let result = MakeTwoWayCall({method:'GetProfile'});
+//         return result;
+//     }
 
-    Test():Promise<ICommonReslult<IOtherItem[]>>{
-        let result = MakeTwoWayCall({method:'GetProfile'});
-        return result;
-    }
-}
 
-export const ApiWrapper = new ApiWrapperClass();
+//     Test():Promise<ICommonReslult<IOtherItem[]>>{
+//         let result = MakeTwoWayCall({method:'GetProfile'});
+//         return result;
+//     }
+// }
+
+// export const ApiWrapper = new ApiWrapperClass();
 
 // async function test(){
 //     let response = await ApiWrapper.GetProfile();
@@ -41,27 +45,6 @@ export const ApiWrapper = new ApiWrapperClass();
 //     let r1 = await ApiWrapper.Test();
 //     r1.result[0].
 // }
-
-
-export interface ISetTitle{
-    method:'SetTitle';
-    title:string;
-}
-
-export interface IGetProfileResponse{
-    serviceList:string[];
-}
-
-export interface IGetProfile{
-    method:'GetProfile';
-}
-
-
-export type TApiOneWayCall = ISetTitle;
-export type TApiTwoWayCall = IGetProfile;
-
-
-
 
 export function HandleOneWayCall(event: any, payload: TApiOneWayCall){
     const webContents = event.sender;
@@ -84,8 +67,9 @@ export async function HandleTwoWayCall(event: any, payload: TApiTwoWayCall){
     switch (payload.method){
         case 'GetProfile':
             return GetProfileImpl();
-    }
-    
+        case 'GetFileResource':
+            return GetFileResourceImpl(payload.filePath);
+    }    
 } 
 
 function GetProfileImpl(){
@@ -95,7 +79,19 @@ function GetProfileImpl(){
         return result;
     
     } catch(err:any){
-        let result:ICommonReslult<IProfileItem[]> = {isOk:false,error:err.message};
+        let result = {isOk:false,error:err.message};
         return result;
     }
 }
+
+function GetFileResourceImpl(filePath:string){
+    const fileFolder = 'D:/IumiCash4333/Projects/CashinApp/Data/Files';
+    const fullPath = path.join(fileFolder, filePath);
+    const b64 = fs.readFileSync(fullPath).toString('base64');
+    return b64;
+}
+
+
+
+
+

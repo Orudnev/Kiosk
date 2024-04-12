@@ -11,7 +11,7 @@ export interface IButtonBaseProps{
     //renderContentArgs:unknown[];
     //renderContent?:(...args:unknown[])=>ReactElement;
     getChildren?:(pressed:boolean)=>ReactNode;
-    //children?:ReactNode;
+    children?:ReactNode;
     //key?:string;
     //style?:any;
 }
@@ -21,7 +21,7 @@ export interface IButtonBaseProps{
 
 export const ButtonBase = (props:IButtonBaseProps) => {
     const [btnPressed,setBtnPressed] = useState(false);
-    const cstr = props.btnStyleType+ (btnPressed?" "+props.btnStyleType+"__pressed":"");
+    const cstr = props.btnStyleType + (btnPressed?" "+props.btnStyleType+"__pressed":"");
     return (
         <div className={cstr} 
             onMouseDown = {(e)=>{
@@ -36,7 +36,7 @@ export const ButtonBase = (props:IButtonBaseProps) => {
                 e.preventDefault();
                 if(btnPressed){
                     setBtnPressed(false);
-                    //props.onClick();
+                    props.onClick();
                 }
             }} 
             onTouchEnd = {(e)=>{    
@@ -44,11 +44,11 @@ export const ButtonBase = (props:IButtonBaseProps) => {
                 e.preventDefault();
                 if(btnPressed){
                     setBtnPressed(false);
-                    //props.onClick();
+                    props.onClick();
                 }
             }} 
             >
-            {props.getChildren?props.getChildren(btnPressed):<div/>}
+            {props.getChildren?props.getChildren(btnPressed):props.children?props.children:<div /> }
             {/* {props.renderContent && props.renderContent(...props.renderContentArgs)} */}
         </div>        
     );

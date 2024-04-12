@@ -5,148 +5,100 @@
     position: relative;
 }
 
-.ngroot{
+.ng{
    box-sizing: border-box; 
    font-family: "Inter";
+   display: flex;
+   flex-direction: column;
+   height: 100%;
 }
 
-.ng-gap-default{
-    column-gap: 5px;
-    row-gap: 10px;
+.ng_theme__root-items{
+    --ng-height: 552px;
+    --ng-item-width: 508px;
+    --ng-item-height: 156px;
+    --ng-navbar-height: 62px;
+    --ng-gap: 35px 30px;
+    height: var(--ng-height);
 }
-.ng-gap-darkBlue{
-    column-gap: 30px;
-    row-gap: 35px;
-}
-
-.ng-itemarea-flexcontainer-default{
-    @include mx-itemarea-flexcontainer;
-    background-color: #F7F7FD;
-    border: solid,2px,#EFEFFB;
-    border-radius: 5px;
-    padding-top: 27px;
-    padding-bottom: 27px;
-    padding-left: 11px;
-    padding-right: 11px;
-    min-height: 465px;
+.ng_content-wrapper{
+    flex: 1 0 auto;
 }
 
-.ng-itemarea-flexcontainer-darkBlue{
-
-    @include mx-itemarea-flexcontainer;
-
+.ng_item-area{
+    display: flex;    
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--ng-gap);
 }
- 
-.ng-item-default{
-    border-radius: 10px;
-    background-color: white;
+.ng_navbar{    
+    flex: 0 0 auto;
     display: flex;
-    border: 2px solid #EFEFFB;
-    border-radius: 13px;
-    flex-direction: column;
-    justify-content: center;
-}
-.ng-item-default__active{
-    background: #F9B119;
-    opacity: 0.6;
+    justify-content: flex-end;
+    height: var(--ng-navbar-height);
 }
 
-.ng-item-darkBlue{
-    display: flex;
-    align-items: center;
-    border-radius: 10px;
-    background: radial-gradient(66.72% 97.35% at 100% 96.23%, #2F2A85 0%, #55317E 100%);
+.ng_item{
+    display: block;
 }
-.ng-item-darkBlue__active{
-    background: #F9B119;
-    .ng-label-section-darkBlue{
-        color:#2E2A85;
+
+.ng-item-theme_root-items{
+    width: var(--ng-item-width);
+    height: var(--ng-item-height);
+    border-radius: 10px;
+    background: radial-gradient(66.72% 97.35% at 100% 96.23%, #2f2a85 0, #55317e 100%);
+    img{
+        display: inline-block;
+        position: relative;
+        top: 40px;
+        left: 40px;
+    }
+    div{
+        display: inline-block;
+        font-size: 32px;
+        font-weight: 700;
+        color: #fff;
+        position: relative;
+        top: 15px;
+        left: 80px;
     }
 }
 
-.ng-image-section-default{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 7%;
-    flex-grow: 1;
+.ng-item-theme_root-items__pressed{
+    background: #f9b119;
 }
 
-.ng-image-section-darkBlue{
-    display: inline-block;
-    margin-left: 8%;
-    margin-right: 8%;
-    position: relative;
+
+.ng_button{
+    width: 64px;
+    height: 64px;    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;    
+    background: linear-gradient(180deg, #55317E 0%, #2F2A85 100%);
+    color: white;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 29px;
+    color:white;    
+    margin-left: 20px;
+}
+.ng_button__pressed{
+    background: #EFEFFB;
+    color: black;        
+    stroke: black;
+    fill:black;
 }
  
+
 .ng-image-verticalPosition-default{
     max-width: 60%;
     height: auto;
     pointer-events: none; /*элемент не может стать объектом мыши*/
-    user-select: none; /*запрет на перенос текста*/
-}
-
-.ng-image-verticalPosition-darkBlue {
-    top: 50%;
-    pointer-events: none; /*элемент не может стать объектом мыши*/
-    user-select: none; /*запрет на перенос текста*/
-}
-
-.ng-label-section-default{
-    text-align: center;
-    color:#2E2A85;
-    font-size: 20px;
-    font-weight: 600;
-    height: 52px;
-    padding: 5px;
-    position: relative;
-    top: -20px;
-} 
-
-.ng-label-section-darkBlue{
-    display: inline-block;
-    color: white;
-    font-size: 32px;
-    font-weight: 700;
-} 
-
-
-
-@mixin mx-ng-btn {
-    border: solid 2px #EFEFFB;
-    border-radius: 5px;
-    width: 5%;
-    height: 10%;
-    width: 65px;
-    line-height: 60px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 24px;
-}
-.ng-btn-regular{
-    @include mx-ng-btn;
-    background-color: #F7F7FD;
-    color:#2E2A85;
+    user-select: none; /*запрет на выделениес текста*/
 }
 
 
-
-
-.ng-btn-highlighted{
-    @include mx-ng-btn;
-    background: linear-gradient(180deg, #55317E 0%, #2F2A85 100%);
-    color: white;
-}
-
-.ng-navbar{
-} 
-
-.ng-navbar__content{
-    display: flex; 
-    flex-direction: row; 
-    justify-content: flex-end;
-    position: relative;
-    top: -10px;
-    gap:5px;
-}

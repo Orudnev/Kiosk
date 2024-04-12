@@ -1,13 +1,10 @@
-import React, { createRef } from 'react';
-import { TScenarioUid,TScenarioItemUid } from '../../scn-custom'; 
-import NavGalleryItem from './NavGalleryItem';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, ReactNode } from 'react';
+import { TScenarioItemUid, TScenarioUid } from '../../scn-custom';
 import './navGallery.scss';
-
-
-export enum Theme {
-    default = "default",
-    darkBlue = "darkBlue",
-}
+import { error } from 'console';
+import { ButtonBase, IButtonBaseProps } from '../button-base';
+import { GetIconClass } from '../../../common-types';
+import { TLButton } from '../../../localization';
 
 export interface INavGalleryItemDTO {
     id: string;
@@ -15,386 +12,247 @@ export interface INavGalleryItemDTO {
     caption?: string;
     description?: string;
     imgSrc?: string;
+    imgB64?: string;
     scenarioId: TScenarioUid;
-    scenarioItemId: TScenarioItemUid|undefined;
-    tag:any;
+    scenarioItemId: TScenarioItemUid | undefined;
+    tag: any;
     requisitesName: string;
     requisitesMask?: string;
 }
 
-export interface INavGallerySelectedItemDTO {
-    id?: string;
-    description?: string;
+export type TNGridDataSource = (Promise<INavGalleryItemDTO[]>) | INavGalleryItemDTO[] | undefined;
+
+export interface INavGalleryProps {
+    dataSource?: INavGalleryItemDTO[];
+    showItemsCriteria?: INavGalleryShowItemsCriteria;
+    onShownItemsChanged?: (lastShownItems: INavGalleryItemDTO[], lastShownPageIndex: number) => void;
+    onItemSelected?: (item: INavGalleryItemDTO) => void;
 }
 
-export interface IProfileItemDTO {
-    id: string;
-    name?: string;
-    description?: string;
-    scenario: string;
-    parentId?: string;
-    image?: string;
-    requisitesName: string;
-    requisitesMask?: string;
+function getImgSrc(item: INavGalleryItemDTO) {
+    if (item.imgSrc?.includes('svg')) {
+        return `data:image/svg+xml;base64,${item.imgB64}`;
+    }
+    if (item.imgSrc?.includes('png')) {
+        return `data:image/png;base64,${item.imgB64}`;
+    }
+    throw new Error(`Not implemented extention:${item.imgSrc}`);
 }
 
-export type TNGridDataSource = (ng: NavGallery) => INavGalleryItemDTO[] | INavGalleryItemDTO[];
-
-export type TSize = {
-    width: number;
+class NgCss {
     height: number;
+    width: number;
+    itemWidth: number;
+    itemHeight: number;
+    rowGap: number;
+    columnGap: number;
+    navBarHeight: number;
+    constructor(ngref: any) {
+        this.height = parseInt(window.getComputedStyle(ngref.current).getPropertyValue('--ng-height'));
+        this.width = parseInt(window.getComputedStyle(ngref.current).getPropertyValue('width'));
+        this.itemWidth = parseInt(window.getComputedStyle(ngref.current).getPropertyValue('--ng-item-width'));
+        this.itemHeight = parseInt(window.getComputedStyle(ngref.current).getPropertyValue('--ng-item-height'));
+        this.navBarHeight = parseInt(window.getComputedStyle(ngref.current).getPropertyValue('--ng-navbar-height'));
+        let gap = window.getComputedStyle(ngref.current).getPropertyValue('--ng-gap');
+        this.rowGap = parseInt(gap.trim().split(' ')[0]);
+        this.columnGap = parseInt(gap.trim().split(' ')[1]);;
+    }
 }
 
-export type TGotoParentMode = 'internal' | 'external';
+// export interface INgButtonProps{
+//     btnId:'ngPrevPage'|'ngNextPage';
+//     btnStyleType:string;
+//     onClick:()=>void;
+//     getChildren?:(pressed:boolean)=>ReactNode;
+// }
 
-export interface INavGaleryProps {
-    dataSource: TNGridDataSource;
-    currNodeId?: string;
-    itemSize: TSize | ((ng: NavGallery) => TSize);
-    //При выборе child элемента у которого есть свои child-ы автоматически отрисовыватся кнопка "Back <-" 
-    //для возврата на уровень parent-a. В случае если дефолтную кнопку "Back" понадобится заменить кастомной кнопкой
-    //отрисованной каким-то внешним комонентом, необходимо установить doNotRenderDefaultBackButton=false, а при  
-    //нажатии на кастомную кнопку "back" установить INavGaleryProps.currNodeId соответствующий parent-у 
-    doNotRenderDefaultBackButton?: boolean;
-    onNodeContainingChildrenClicked?: (item: INavGalleryItemDTO) => void;
-    onLeafItemClicked?: (item: INavGalleryItemDTO) => void;
-    theme?: ((ng: NavGallery) => Theme) | Theme;
-    allowUseNavBarSpaceForItems?:boolean; //бывает ситуация когда все элементы можно уместить на одной странице 
-                                          //используя пространство навбара (когда для того, чтобы поместить все
-                                          //элементы на одной странице не хватает совсем не много места, сам навбар 
-                                          //в этой ситуации не нужен, так как страница только одна)  
-                                          //если allowUseNavBarSpaceForItems != true, то пространство навбара не будет
-                                          //использоваться для отрисовки кнопок. если параметр allowUseNavBarSpaceForItems
-                                          //не указан, то считается, что  allowUseNavBarSpaceForItems = false
-}
-
-interface INavGaleryState {
-    currNodeId?: string;
-    selectedPageIndex: number;
-    galleryWidth: number;
-    galleryHeight: number;
-    spaceBetweenElmHor:number;
-    spaceBetweenElmVert:number;
-}
-
-interface Paging {
-    itemAreaHeight: number;
-    pageCount: number;
-    pageItems: INavGalleryItemDTO[];
-}
-
-export default class NavGallery extends React.Component<INavGaleryProps, INavGaleryState>{
-    elmRef = createRef<HTMLDivElement>();
-    navBarRef = createRef<HTMLDivElement>();
-    navBarHeight = 110;
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            currNodeId: undefined,
-            selectedPageIndex: 0,
-            galleryWidth: 0,
-            galleryHeight: 0,
-            spaceBetweenElmHor:0,
-            spaceBetweenElmVert:0
-        };
-        this.handleOnResize = this.handleOnResize.bind(this);
-    }
- 
-    componentDidMount() {
-        this.handleOnResize();
-        window.addEventListener('resize', this.handleOnResize);
-    }
-
-    componentDidUpdate(prevProps: Readonly<INavGaleryProps>, prevState: Readonly<INavGaleryState>, snapshot?: any): void {
-        if(prevProps.currNodeId && !this.props.currNodeId){
-            this.setState({currNodeId:'',selectedPageIndex:0})
-            return;
-        }
-        if (this.props.currNodeId !== this.state.currNodeId) {
-            this.setState({ currNodeId: this.props.currNodeId });
-        }
-        this.syncTheme();
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('resize', this.handleOnResize);
-    }
-
-    syncTheme(){
-        if (!this.elmRef.current) {
-            return;
-        }
-        let themeStr = Theme.default;
-        if (typeof(this.props.theme)==="function"){
-            themeStr = this.props.theme(this)
-        } else {
-            if(this.props.theme){
-                themeStr = this.props.theme;
-            }
-        }
-        let currClass = "";
-        let horSpace = 0;
-        let vertSpace = 0;
-        if(this.elmRef.current){
-            currClass = this.elmRef.current.className;
-            horSpace = parseInt(window.getComputedStyle(this.elmRef.current).columnGap);
-            vertSpace = parseInt(window.getComputedStyle(this.elmRef.current).rowGap);
-        }
-        if(this.state.spaceBetweenElmHor != horSpace || this.state.spaceBetweenElmVert != vertSpace){
-            this.setState({
-                spaceBetweenElmHor:horSpace,
-                spaceBetweenElmVert:vertSpace
-            });
-        }            
-    }
-
-    getAllTreeNodes(): INavGalleryItemDTO[] {
-        if (typeof (this.props.dataSource) === 'function') {
-            return this.props.dataSource(this);
-        }
-        return this.props.dataSource;
-    }
-
-    getNodes(): INavGalleryItemDTO[] {
-        let allTreeNodes = this.getAllTreeNodes();
-        let result = [];
-        if (this.state.currNodeId) {
-            result = allTreeNodes.filter(itm => itm.parent === this.state.currNodeId);
-        } else {
-            result = allTreeNodes.filter(itm => !itm.parent);
-        }
-        return result;
-    }
-
-    getItemSize(): TSize {
-        let result: TSize;
-        if (typeof (this.props.itemSize) == "function") {
-            let itmSize: TSize = this.props.itemSize(this);
-            result = { width: itmSize.width, height: itmSize.height };
-        } else {
-            result = { width: this.props.itemSize.width, height: this.props.itemSize.height };
-        }
-        return result;
-    }
-
-    getNavBarHeight() {
-        // if(this.navBarHeight === 0){
-        //     this.navBarHeight = (this.navBarRef.current ? this.navBarRef.current.offsetHeight : 0);
-        // }
-        return this.navBarHeight;
-    }
-
-    getCurrPageItems(): Paging {
-        let allItems = this.getNodes();
-        let allItemsCount = allItems.length;
-        let itmSize = this.getItemSize();
-        let itemWidthInPixels = itmSize.width;
-        let itemHeightInPixels = itmSize.height;
-        if (typeof (this.props.itemSize) == "function") {
-            let itmSize: TSize = this.props.itemSize(this);
-            itemWidthInPixels = itmSize.width;
-            itemHeightInPixels = itmSize.height;
-        } else { 
-            itemWidthInPixels = this.props.itemSize.width;
-            itemHeightInPixels = this.props.itemSize.height;
-        }
-        let navBarHeight = this.getNavBarHeight();
-        let itemHeightFull = itemHeightInPixels + this.state.spaceBetweenElmVert;
-        let columnCount = Math.trunc(this.state.galleryWidth / itemWidthInPixels);
-        if(itemWidthInPixels*columnCount + this.state.spaceBetweenElmHor*(columnCount-1)>this.state.galleryWidth){
-            columnCount = columnCount - 1;
-        }
-        let itemAreaHeightMultiPage = this.state.galleryHeight - navBarHeight;
-        let itemAreaHeightOnePage = this.state.galleryHeight;
-        if(!this.props.allowUseNavBarSpaceForItems){
-            itemAreaHeightOnePage = itemAreaHeightMultiPage;
-        } 
-        let getRowCount = (itmAreaH: number) => Math.trunc(itmAreaH / itemHeightFull);
-        let rowCount = getRowCount(itemAreaHeightOnePage);
-        let itmAreaHeight = itemAreaHeightOnePage;
-        let itemsCountPerPage = columnCount * rowCount;
-        let pgCount = Math.trunc(allItemsCount / itemsCountPerPage) + (allItemsCount % itemsCountPerPage === 0 ? 0 : 1);
-        let firstPgItmIndex = this.state.selectedPageIndex * itemsCountPerPage;
-        let lastPgItmIndex = firstPgItmIndex + itemsCountPerPage - 1;
-        let pgItems = allItems.filter((itm, index) => (index >= firstPgItmIndex && index <= lastPgItmIndex));
-        if (pgCount > 1 || (pgItems.length > 0 && pgItems[0].parent)) {
-            rowCount = getRowCount(itemAreaHeightMultiPage);
-            itmAreaHeight = itemAreaHeightMultiPage;
-            itemsCountPerPage = columnCount * rowCount;
-            pgCount = Math.trunc(allItemsCount / itemsCountPerPage) + (allItemsCount % itemsCountPerPage === 0 ? 0 : 1);
-            firstPgItmIndex = this.state.selectedPageIndex * itemsCountPerPage;
-            lastPgItmIndex = firstPgItmIndex + itemsCountPerPage - 1;
-            pgItems = allItems.filter((itm, index) => (index >= firstPgItmIndex && index <= lastPgItmIndex));
-        }
-        let rv: Paging = {
-            itemAreaHeight: itmAreaHeight,
-            pageCount: pgCount,
-            pageItems: pgItems
-        };
-        if(rv.pageItems.length>0){
-            let s=1;
-        }
-        return rv;
-    }
-
-    handlePgBackButtonClick() {
-        if(this.state.selectedPageIndex>0){
-            this.setState({selectedPageIndex:this.state.selectedPageIndex-1});
-        }
-    }
-    handlePgNextButtonClick(){
-        let pg = this.getCurrPageItems();
-        if(this.state.selectedPageIndex<pg.pageCount-1){
-            this.setState({selectedPageIndex:this.state.selectedPageIndex+1});
-        }
-    }
- 
-    handleItemClick(itemId: string) {
-        let currItm = this.getNodes().find(itm => itm.id === itemId);
-        if (this.hasChildren(itemId)) {
-            if (this.props.onNodeContainingChildrenClicked && currItm) {
-                this.props.onNodeContainingChildrenClicked(currItm);
-            }
-            this.setState({ currNodeId: itemId,selectedPageIndex:0 });
-        } else {
-            if (this.props.onLeafItemClicked) {
-                let currItm = this.getNodes().find(itm => itm.id === itemId);
-                if (currItm) {
-                    this.props.onLeafItemClicked(currItm);
+function NgButton(props: IButtonBaseProps) {
+    let styleInfo = GetIconClass(props.btnId as TLButton);
+    return (
+        <ButtonBase
+            onClick={() => {
+                props.onClick();
+            }}
+            btnId={props.btnId} btnStyleType='ng_button'
+            getChildren={(pressed) => {
+                let imgClass = styleInfo?.imageClass;
+                if (pressed && styleInfo?.imageSelectedClass) {
+                    imgClass = styleInfo?.imageSelectedClass;
                 }
-            }
-        }
-    }
-
-    handleOnResize() {
-        let clWidth = 0;
-        let clHeight = 0;
-        if (this.elmRef.current) {
-            clWidth = this.elmRef.current.offsetWidth;
-            if (this.elmRef.current.parentElement) {
-                clHeight = this.elmRef.current.parentElement.offsetHeight;
-            }
-        }
-        // let maxHeight = 500;
-        // if(maxHeight){
-        //     clHeight = clHeight<maxHeight?clHeight:maxHeight;
-        // }
-        this.setState({
-            galleryWidth: clWidth,
-            galleryHeight: clHeight,
-            selectedPageIndex: 0
-        });
-    }
-
-    handlePgButtonClick(newPgIndex: number) {
-        this.setState({ selectedPageIndex: newPgIndex });
-    }
-
-    hasChildren(nodeId: string): boolean {
-        let rv = this.getAllTreeNodes().some(itm => itm.parent && itm.parent === nodeId);
-        return rv;
-    }
-
-
-    renderItems() {
-        if (!this.elmRef.current) {
-            return (<div />);
-        }
-    
-        let pgInfo = this.getCurrPageItems();
-        let items = pgInfo.pageItems.map((itm: INavGalleryItemDTO) => {
-            return (
-                <NavGalleryItem
-                    navGallery={this}
-                    key={itm.id}
-                    data={itm}
-                    onItemClick={(itemId: any) => this.handleItemClick(itemId)}
-                />
-            );
-        });
-        let theme = "ng-itemarea-flexcontainer-default";
-        if (typeof (this.props.theme) === "function") {
-            theme = "ng-itemarea-flexcontainer-" + this.props.theme(this);
-        } else {
-            if (this.props.theme) {
-                theme = "ng-itemarea-flexcontainer-" + this.props.theme;
-            }
-        }
-        return (
-            <div id="itemArea" style={{ height: pgInfo.itemAreaHeight + "px" }}>
-                <div id="itemAreaFlexContainer" className={theme} style={{ rowGap: this.state.spaceBetweenElmVert+"px", columnGap:this.state.spaceBetweenElmHor+"px" }} >
-                    {items}
-                </div>
-            </div>
-        );
-    }
-
-    renderNavBarContent() {
-        if (!this.navBarRef ) {
-            return (<div />);
-        }
-        let pg = this.getCurrPageItems();
-        if (pg.pageItems.length == 0) {
-            return (<div />);
-        }
-        let isRootPage = !pg.pageItems[0].parent;
-        let pageButtons = [];
-        if (pg.pageCount > 1) {
-            if(pg.pageCount>1){
-                let btnBack = <div key={"btnPgBack"} className="ng-btn-regular" 
-                    onClick={() => this.handlePgBackButtonClick()}
-                    onTouchEnd={() => this.handlePgBackButtonClick()}
-                    > 
-                        {"<"}</div>;
-                pageButtons.push(btnBack);    
-            }
-            // for (let i: number = 0; i < pg.pageCount; i++) {
-            //     let newBtn = 
-            //     <div key={i} className="ng-btn-regular" 
-            //         onClick={() => this.handlePgButtonClick(i)}
-            //         onTouchEnd={() => this.handlePgButtonClick(i)}
-            //         >
-            //             {i + 1}
-            //     </div>;
-            //     if (i === this.state.selectedPageIndex) {
-            //         newBtn = <div key={i} className="ng-btn-highlighted">{i + 1}</div>;
-            //     }
-            //     pageButtons.push(newBtn);
-            // }
-            if(pg.pageCount>1){
-                let btnBack = 
-                <div key={"btnPgNext"} className="ng-btn-regular" 
-                    onClick={() => this.handlePgNextButtonClick()}
-                    onTouchEnd={() => this.handlePgNextButtonClick()}
-                    >
-                        {">"}
-                </div>;
-                pageButtons.push(btnBack);    
-            }
-        }
-        return (
-            <div className="ng-navbar__content">
-                {pageButtons}
-            </div>
-        );
-    }
-
-    render() {
-        let ngGapClassStr = "";
-        if(this.props.theme){
-            let theme = (typeof(this.props.theme)==='function'?this.props.theme(this):this.props.theme);
-            ngGapClassStr = " ng-gap-" + theme;
-        }
-        let clsStr = "ngroot"+ngGapClassStr;
-        return (
-            <div id="NavGallery" className={clsStr}
-                ref={this.elmRef}
-            >
-                {this.renderItems()}
-                <div className="ng-navbar" ref={this.navBarRef} >
-                    {this.renderNavBarContent()}
-                </div>
-            </div>
-        );
-    }
+                return (
+                    <img className={imgClass} />
+                );
+            }} />
+    )
 }
+
+
+export interface INavGalleryShowItemsCriteria {
+    type: 'RootItemsOnly' | 'ByParentId' | 'BySearchString';
+    value: string;
+}
+
+export interface INavGallery {
+    SetDataSource: (dataSource: INavGalleryItemDTO[], showItemsCriteria: INavGalleryShowItemsCriteria) => void;
+}
+
+interface INavGalleryItemProps {
+    item: INavGalleryItemDTO;
+    onClick:()=>void;
+}
+
+
+export const NavGalleryItem = (props:INavGalleryItemProps) => {
+    //classStr = 'ng_item ng-item-theme_root-items';
+    //classStr = 'ng_item ng-item-theme_root-items ng-item-theme_root-items__pressed';
+
+    let themeId = 'root-items';
+    const [btnPressed,setBtnPressed] = useState(false);
+    const cstr = `ng_item ng-item-theme_${themeId}` + (btnPressed?` ng-item-theme_${themeId}__pressed`:'');
+    return (
+        <div id={`ngitem_${props.item.id}`} className={cstr} 
+            onMouseDown = {(e)=>{
+                e.preventDefault();
+                setBtnPressed(true);
+            }} 
+            onTouchStart = {(e)=>{
+                e.preventDefault();
+                setBtnPressed(true);
+            }} 
+            onMouseUp = {(e)=>{
+                e.preventDefault();
+                if(btnPressed){
+                    setBtnPressed(false);
+                    props.onClick();
+                }
+            }} 
+            onTouchEnd = {(e)=>{    
+                //обработчик для события от тачскрина
+                e.preventDefault();
+                if(btnPressed){
+                    setBtnPressed(false);
+                    props.onClick();
+                }
+            }} 
+            >
+            <img src={getImgSrc(props.item)}></img>
+            <div>{props.item.caption}</div>
+        </div>        
+    );
+}
+
+
+
+
+export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: any) => {
+    let dfltState: INavGalleryItemDTO[] = [];
+    const [allItems, setAllItems] = useState<INavGalleryItemDTO[]>(dfltState);
+    const [lastCriteria, setLastCriteria] = useState<INavGalleryShowItemsCriteria>({ type: 'RootItemsOnly', value: '' });
+    const [itemsToBeShown, setItemsToBeShown] = useState<INavGalleryItemDTO[]>(dfltState);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const ngref = useRef(null);
+    const cssProps: any = useRef({});
+    let showNavBar = false;
+    let pgCount = -1;
+
+    let setDataSourceImpl = (dataSource: INavGalleryItemDTO[], showItemsCriteria: INavGalleryShowItemsCriteria) => {
+        setAllItems(dataSource);
+        setCurrentPageIndex(0);
+        switch (showItemsCriteria.type) {
+            case 'RootItemsOnly':
+                setItemsToBeShown(dataSource.filter(itm => !itm.parent));  // показываем только корневые элементы
+                break;
+            case 'ByParentId':
+                setItemsToBeShown(dataSource.filter(itm => itm.parent === showItemsCriteria.value));
+                break;
+            case 'BySearchString':
+                setItemsToBeShown(dataSource.filter(itm => itm.caption?.toLowerCase().includes(showItemsCriteria.value.toLocaleLowerCase())));
+                break;
+        }
+    };
+
+    useImperativeHandle(ngInstanceRef, () => {
+        return {
+            SetDataSource(dataSource: INavGalleryItemDTO[], showItemsCriteria: INavGalleryShowItemsCriteria) {
+                setDataSourceImpl(dataSource, showItemsCriteria);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        cssProps.current = new NgCss(ngref);
+        if (props.dataSource) {
+            let criteria: INavGalleryShowItemsCriteria = { type: 'RootItemsOnly', value: '' };
+            if (props.showItemsCriteria) {
+                criteria = props.showItemsCriteria;
+            }
+            setDataSourceImpl(props.dataSource, criteria);
+        }
+    }, [props.dataSource]);
+    let currentPageItems = itemsToBeShown;
+    if (cssProps.current.hasOwnProperty('height')) {
+        let intDiv = (val: number, divider: number) => (val - val % divider) / divider;
+        let css = cssProps.current as NgCss;
+        let pgItemCountByWidth_WithoutGap = intDiv(css.width, css.itemWidth);
+        let pgItemSummaryWidth_WithoutGap = css.itemWidth * pgItemCountByWidth_WithoutGap;
+        let gapSummaryWidth = css.columnGap * pgItemCountByWidth_WithoutGap - css.columnGap;
+        let pgItemCountByWidth = (pgItemSummaryWidth_WithoutGap + gapSummaryWidth > css.width)
+            ? pgItemCountByWidth_WithoutGap - 1
+            : pgItemCountByWidth_WithoutGap;
+
+        let pgItemCountByHeight_WithoutGap = intDiv(css.height, css.itemHeight);
+        let pgItemSummaryHeight_WithoutGap = css.itemHeight * pgItemCountByHeight_WithoutGap;
+        let gapSummaryHeight = css.rowGap * pgItemSummaryHeight_WithoutGap - css.rowGap;
+        let pgItemCountByHeight = (pgItemSummaryHeight_WithoutGap + gapSummaryHeight > css.height)
+            ? pgItemCountByHeight_WithoutGap - 1
+            : pgItemCountByHeight_WithoutGap;
+
+        let itemCountByPage = pgItemCountByWidth * pgItemCountByHeight;
+        let itemsCountToBeShown = itemsToBeShown.length;
+        if (itemsToBeShown.length > itemCountByPage) {
+            // Все элементы на одной странице не поместятся, разбиваем на страницы 
+            // и отображаем страницу с номером currentPageIndex
+            showNavBar = true;
+            let itemsAreaHeight = css.height - css.navBarHeight;
+            pgItemCountByHeight = intDiv(itemsAreaHeight, css.itemHeight + css.rowGap);
+            itemCountByPage = pgItemCountByWidth * pgItemCountByHeight;
+            pgCount = intDiv(itemsCountToBeShown, itemCountByPage) + (itemsCountToBeShown % itemCountByPage ? 1 : 0);
+            let startPgItemIndex = currentPageIndex * itemCountByPage;
+            let endPgItemIndex = startPgItemIndex + itemCountByPage - 1;
+            currentPageItems = itemsToBeShown.filter((itm, idx) =>
+                idx >= startPgItemIndex && idx <= endPgItemIndex
+            );
+        }
+
+    }
+    return (
+        <div ref={ngref} className='ng ng_theme__root-items'>
+            <div className='ng_content-wrapper'>
+                <div className='ng_item-area'>
+                    {currentPageItems.map((itm: INavGalleryItemDTO) => {
+                        return (
+                            <NavGalleryItem item={itm} onClick={()=>''} />
+                        );
+                    })}
+                </div>
+            </div>
+            {showNavBar &&
+                <div className='ng_navbar'>
+                    <NgButton btnId='btnBack' btnStyleType='ng_button'
+                        onClick={() => {
+                            if (currentPageIndex > 0) {
+                                setCurrentPageIndex(currentPageIndex - 1);
+                            }
+                        }} />
+                    <NgButton btnId='btnNext' btnStyleType='ng_button'
+                        onClick={() => {
+                            if (currentPageIndex < pgCount - 1) {
+                                setCurrentPageIndex(currentPageIndex + 1);
+                            }
+                        }} />
+                </div>
+            }
+        </div>
+    );
+});
+

@@ -6,5 +6,6 @@ export const ScnConfig: any[] = [
     (<StepBase scnItem={new ScnItemBase({
         scnUid:'config',
         scnItemUid:'main'
+
     })}  />)
 ];
