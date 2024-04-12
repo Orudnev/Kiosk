@@ -9,14 +9,29 @@ import { AppGlobal } from '../../app';
 
 
 export const ScnSelectService: any[] = [
-    (<StpMainForm btnFunc={(step:any)=>{
-        if(store.getState().StepProps.NavGalleryData.lastCriteria.type === 'RootItemsOnly'){
-            return "";
-        }
-        return "btnHome";
-    }}
-        extraProps={{dataSource:()=>store.getState().StepProps.NavGalleryData.items,
-                     showItemsCriteria:()=>store.getState().StepProps.NavGalleryData.lastCriteria}}
+    (<StpMainForm
+        btnFunc={(step: any) => {
+            if (store.getState().StepProps.NavGalleryData.lastCriteria.type === 'RootItemsOnly') {
+                return "";
+            }
+            return "btnHome";
+        }}
+        messageFunc={(step: any)=>{
+            let criteria = store.getState().StepProps.NavGalleryData.lastCriteria;
+            if (criteria.type === 'RootItemsOnly') {
+                return "Wellcome";
+            }
+            if(criteria.type === 'ByParentId'){
+                let currParent = store.getState().StepProps.NavGalleryData.items.find(itm=>itm.id === criteria.value);
+                if(currParent){
+                    return currParent.description;
+                } 
+            }
+        }}
+        extraProps={{
+            dataSource: () => store.getState().StepProps.NavGalleryData.items,
+            showItemsCriteria: () => store.getState().StepProps.NavGalleryData.lastCriteria
+        }}
         scnItem={new ScnItemBase({
             scnUid: 'main',
             scnItemUid: 'main',
@@ -24,7 +39,7 @@ export const ScnSelectService: any[] = [
                 {
                     name: 'DidMount', handler: async (step) => {
                         let serviceTree = await gItemTree();
-                        store.dispatch({type:'Act_SP_DefineServiceTreeItems',items:serviceTree});
+                        store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
                     }
                 }
             ]
@@ -38,38 +53,38 @@ async function gItemTree() {
     const navGalleryItems: INavGalleryItemDTO[] = [];
     const getProfileResult = await ApiWrapper.GetProfile();
     const loadImgPromises = [];
-    const imageNotFoundPr = ()=>new Promise(resolve => imgNotFoundB64);
-    if(getProfileResult.isOk){
-        let profile = (getProfileResult.result as any).resource as IProfileItemDTO[];    
-        for(var i = 0; i<profile.length; i++){
-            var item : INavGalleryItemDTO = {
-                tag:profile[i],
+    const imageNotFoundPr = () => new Promise(resolve => imgNotFoundB64);
+    if (getProfileResult.isOk) {
+        let profile = (getProfileResult.result as any).resource as IProfileItemDTO[];
+        for (var i = 0; i < profile.length; i++) {
+            var item: INavGalleryItemDTO = {
+                tag: profile[i],
                 id: profile[i].id,
                 parent: profile[i].parentId,
                 caption: profile[i].name,
                 description: profile[i].description,
-                scenarioId: profile[i].scenario != null? profile[i].scenario as TScenarioUid : "main" as TScenarioUid,
+                scenarioId: profile[i].scenario != null ? profile[i].scenario as TScenarioUid : "main" as TScenarioUid,
                 imgSrc: `NGalleryImg/${profile[i].image}`,
                 scenarioItemId: undefined,
                 requisitesName: profile[i].requisitesName,
                 requisitesMask: profile[i].requisitesMask
             };
-            if(item.imgSrc){
+            if (item.imgSrc) {
                 let newPromise = ApiWrapper.GetFileResource(item.imgSrc);
-                loadImgPromises.push(newPromise);                
+                loadImgPromises.push(newPromise);
             } else {
                 let newPromise = imageNotFoundPr();
-                loadImgPromises.push(newPromise);                
+                loadImgPromises.push(newPromise);
             }
             navGalleryItems.push(item);
-        } 
+        }
         let loadResult = await Promise.allSettled(loadImgPromises);
-        loadResult.forEach((result,idx) =>{
-                if(result.status === 'fulfilled'){
-                    navGalleryItems[idx].imgB64 = result.value as string;
-                } else {
-                    navGalleryItems[idx].imgB64 = imgNotFoundB64;
-                }
+        loadResult.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+                navGalleryItems[idx].imgB64 = result.value as string;
+            } else {
+                navGalleryItems[idx].imgB64 = imgNotFoundB64;
+            }
         });
     }
     return navGalleryItems;
