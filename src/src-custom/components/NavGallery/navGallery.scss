@@ -1,19 +1,19 @@
-﻿@mixin mx-itemarea-flexcontainer{
+﻿@mixin mx-itemarea-flexcontainer {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     position: relative;
 }
 
-.ng{
-   box-sizing: border-box; 
-   font-family: "Inter";
-   display: flex;
-   flex-direction: column;
-   height: 100%;
+.ng {
+    box-sizing: border-box;
+    font-family: "Inter";
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.ng_theme__root-items{
+.ng_theme__root-items {
     --ng-height: 552px;
     --ng-item-width: 508px;
     --ng-item-height: 156px;
@@ -21,39 +21,58 @@
     --ng-gap: 35px 30px;
     height: var(--ng-height);
 }
-.ng_content-wrapper{
+
+.ng_theme__default {
+    --ng-height: 465px;
+    --ng-item-width: 200px;
+    --ng-item-height: 200px;
+    --ng-navbar-height: 62px;
+    --ng-gap: 10px 5px;
+    height: var(--ng-height);
+    background-color: #f7f7fd;
+    border: 2px solid #efeffb;
+    border-radius: 5px;
+    padding: 27px 11px;
+}
+
+
+
+.ng_content-wrapper {
     flex: 1 0 auto;
 }
 
-.ng_item-area{
-    display: flex;    
+.ng_item-area {
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--ng-gap);
 }
-.ng_navbar{    
+
+.ng_navbar {
     flex: 0 0 auto;
     display: flex;
     justify-content: flex-end;
     height: var(--ng-navbar-height);
 }
 
-.ng_item{
+.ng_item {
     display: block;
 }
 
-.ng-item-theme_root-items{
+.ng-item-theme_root-items {
     width: var(--ng-item-width);
     height: var(--ng-item-height);
     border-radius: 10px;
     background: radial-gradient(66.72% 97.35% at 100% 96.23%, #2f2a85 0, #55317e 100%);
-    img{
+
+    #img-wrapper {
         display: inline-block;
         position: relative;
         top: 40px;
         left: 40px;
     }
-    div{
+
+    div {
         display: inline-block;
         font-size: 32px;
         font-weight: 700;
@@ -64,18 +83,52 @@
     }
 }
 
-.ng-item-theme_root-items__pressed{
+.ng-item-theme_default {
+    width: var(--ng-item-width);
+    height: var(--ng-item-height);
+    border: 2px solid #efeffb;
+    border-radius: 13px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    #img-wrapper {
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+        padding: 7%;
+        position: relative;
+        top: 8px;
+        img {
+            max-width: 60%;
+        }
+    }
+    div {
+        color: #2e2a85;
+        font-size: 20px;
+        font-weight: 600;
+        height: 52px;
+        padding: 5px;
+        text-align: center;
+        position: relative;
+        top: 5px;
+    }
+}
+
+
+.ng-item-theme_root-items__pressed {
     background: #f9b119;
 }
 
 
-.ng_button{
+.ng_button {
     width: 64px;
-    height: 64px;    
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 5px;    
+    border-radius: 5px;
     background: linear-gradient(180deg, #55317E 0%, #2F2A85 100%);
     color: white;
     font-family: 'Inter';
@@ -83,22 +136,23 @@
     font-weight: 600;
     font-size: 24px;
     line-height: 29px;
-    color:white;    
+    color: white;
     margin-left: 20px;
 }
-.ng_button__pressed{
-    background: #EFEFFB;
-    color: black;        
-    stroke: black;
-    fill:black;
-}
- 
 
-.ng-image-verticalPosition-default{
+.ng_button__pressed {
+    background: #EFEFFB;
+    color: black;
+    stroke: black;
+    fill: black;
+}
+
+
+.ng-image-verticalPosition-default {
     max-width: 60%;
     height: auto;
-    pointer-events: none; /*элемент не может стать объектом мыши*/
-    user-select: none; /*запрет на выделениес текста*/
+    pointer-events: none;
+    /*элемент не может стать объектом мыши*/
+    user-select: none;
+    /*запрет на выделениес текста*/
 }
-
-

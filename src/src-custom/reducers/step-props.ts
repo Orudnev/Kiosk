@@ -44,7 +44,13 @@ export interface IDefineServiceTreeItems{
     items:INavGalleryItemDTO[];
 }
 
-export type TSPActions =  IDefineServiceTreeItems;
+export interface IUpdateNavGalleryShowItemsCriteria{
+    type:'Act_SP_UpdateNavGalleryShowItemsCriteria';
+    newCriteria:INavGalleryShowItemsCriteria;
+}
+
+
+export type TSPActions =  IDefineServiceTreeItems | IUpdateNavGalleryShowItemsCriteria;
 
 export const EmptyFee = {
     banknotesFaceVal:[],
@@ -78,6 +84,9 @@ const reducer:Reducer<ISPReducerState, TSPActions> = (state = spDefaultState, ac
     switch(action.type){
         case 'Act_SP_DefineServiceTreeItems':
             newState.NavGalleryData.items = action.items;
+            return newState;
+        case 'Act_SP_UpdateNavGalleryShowItemsCriteria':
+            newState.NavGalleryData.lastCriteria = action.newCriteria;
             return newState;
     }
     return state;

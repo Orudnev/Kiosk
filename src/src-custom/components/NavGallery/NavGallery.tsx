@@ -25,8 +25,9 @@ export type TNGridDataSource = (Promise<INavGalleryItemDTO[]>) | INavGalleryItem
 export interface INavGalleryProps {
     dataSource?: INavGalleryItemDTO[];
     showItemsCriteria?: INavGalleryShowItemsCriteria;
-    onShownItemsChanged?: (lastShownItems: INavGalleryItemDTO[], lastShownPageIndex: number) => void;
+    onShownItemsChanged?: (newCriteria: INavGalleryShowItemsCriteria) => void;
     onItemSelected?: (item: INavGalleryItemDTO) => void;
+    getThemeId: (currCriteria: INavGalleryShowItemsCriteria) => string;
 }
 
 function getImgSrc(item: INavGalleryItemDTO) {
@@ -98,46 +99,45 @@ export interface INavGallery {
 
 interface INavGalleryItemProps {
     item: INavGalleryItemDTO;
-    onClick:()=>void;
+    onClick: (item: INavGalleryItemDTO) => void;
+    themeId: string;
 }
 
 
-export const NavGalleryItem = (props:INavGalleryItemProps) => {
-    //classStr = 'ng_item ng-item-theme_root-items';
-    //classStr = 'ng_item ng-item-theme_root-items ng-item-theme_root-items__pressed';
-
-    let themeId = 'root-items';
-    const [btnPressed,setBtnPressed] = useState(false);
-    const cstr = `ng_item ng-item-theme_${themeId}` + (btnPressed?` ng-item-theme_${themeId}__pressed`:'');
+export const NavGalleryItem = (props: INavGalleryItemProps) => {
+    const [btnPressed, setBtnPressed] = useState(false);
+    const cstr = `ng_item ng-item-theme_${props.themeId}` + (btnPressed ? ` ng-item-theme_${props.themeId}__pressed` : '');
     return (
-        <div id={`ngitem_${props.item.id}`} className={cstr} 
-            onMouseDown = {(e)=>{
+        <div id={`ngitem_${props.item.id}`} className={cstr}
+            onMouseDown={(e) => {
                 e.preventDefault();
                 setBtnPressed(true);
-            }} 
-            onTouchStart = {(e)=>{
+            }}
+            onTouchStart={(e) => {
                 e.preventDefault();
                 setBtnPressed(true);
-            }} 
-            onMouseUp = {(e)=>{
+            }}
+            onMouseUp={(e) => {
                 e.preventDefault();
-                if(btnPressed){
+                if (btnPressed) {
                     setBtnPressed(false);
-                    props.onClick();
+                    props.onClick(props.item);
                 }
-            }} 
-            onTouchEnd = {(e)=>{    
+            }}
+            onTouchEnd={(e) => {
                 //обработчик для события от тачскрина
                 e.preventDefault();
-                if(btnPressed){
+                if (btnPressed) {
                     setBtnPressed(false);
-                    props.onClick();
+                    props.onClick(props.item);
                 }
-            }} 
-            >
-            <img src={getImgSrc(props.item)}></img>
+            }}
+        >
+            <div id='img-wrapper'>
+                <img src={getImgSrc(props.item)}></img>
+            </div>
             <div>{props.item.caption}</div>
-        </div>        
+        </div>
     );
 }
 
@@ -154,9 +154,14 @@ export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: an
     const cssProps: any = useRef({});
     let showNavBar = false;
     let pgCount = -1;
+    let themeId = props.getThemeId(lastCriteria);
 
     let setDataSourceImpl = (dataSource: INavGalleryItemDTO[], showItemsCriteria: INavGalleryShowItemsCriteria) => {
         setAllItems(dataSource);
+        setLastCriteria(showItemsCriteria);
+        if(props.onShownItemsChanged){ 
+            props.onShownItemsChanged(showItemsCriteria);
+        }
         setCurrentPageIndex(0);
         switch (showItemsCriteria.type) {
             case 'RootItemsOnly':
@@ -226,12 +231,18 @@ export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: an
 
     }
     return (
-        <div ref={ngref} className='ng ng_theme__root-items'>
+        <div ref={ngref} className={`ng ng_theme__${themeId}`}>
             <div className='ng_content-wrapper'>
                 <div className='ng_item-area'>
                     {currentPageItems.map((itm: INavGalleryItemDTO) => {
                         return (
-                            <NavGalleryItem item={itm} onClick={()=>''} />
+                            <NavGalleryItem item={itm} themeId={themeId} onClick={(item) => {
+                                let newCriteria: INavGalleryShowItemsCriteria = { type: 'ByParentId', value: item.id };
+                                setDataSourceImpl(allItems, newCriteria);
+                                if(props.onItemSelected){
+                                    props.onItemSelected(item);
+                                }
+                            }} />
                         );
                     })}
                 </div>

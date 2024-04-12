@@ -43,8 +43,8 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         this.props.scnItem.handleStepEvent('DidMount', this)
     }
 
-    handleAnyClick() {
-
+    handleAnyClick(btnId:TLButton) {
+        
     }
 
     handleTimerTick() {
@@ -69,10 +69,11 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         }
     }
 
-    onAnyClick() {
+    onAnyClick(btnId:TLButton) {
         if (this.timerId) {
             this.resetTimeout();
         }
+        this.handleAnyClick(btnId);
     }
 
     renderHeader(): JSX.Element {
@@ -105,7 +106,7 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
                 navBtn =
                     <ButtonBase
                         key={btnId}
-                        onClick={() => { return "" }}
+                        onClick={() => this.onAnyClick(btnId)}
                         btnId={btnId} btnStyleType='nav-button'
                         getChildren={(pressed) => {
                             let imgClass = styleInfo?.imageClass;
@@ -132,7 +133,7 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
                 navBtn =
                     <ButtonBase
                         key={btnId}
-                        onClick={() => "" }
+                        onClick={()=>{""} }
                         btnId={btnId} btnStyleType='nav-button__disabled'
                         getChildren={(pressed) => {
                             let imgClass = styleInfo?.imageClass;

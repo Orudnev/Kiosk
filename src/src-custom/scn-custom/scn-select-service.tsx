@@ -9,7 +9,12 @@ import { AppGlobal } from '../../app';
 
 
 export const ScnSelectService: any[] = [
-    (<StpMainForm buttons='btnBack,btnNext'
+    (<StpMainForm btnFunc={(step:any)=>{
+        if(store.getState().StepProps.NavGalleryData.lastCriteria.type === 'RootItemsOnly'){
+            return "";
+        }
+        return "btnHome";
+    }}
         extraProps={{dataSource:()=>store.getState().StepProps.NavGalleryData.items,
                      showItemsCriteria:()=>store.getState().StepProps.NavGalleryData.lastCriteria}}
         scnItem={new ScnItemBase({
