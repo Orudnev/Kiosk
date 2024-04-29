@@ -15,6 +15,10 @@ export interface IGetFileResource{
     filePath:string;
 }
 
+export interface IHardware{
+    method:'GetHardware';
+}
+
 
 export type TApiOneWayCall = ISetTitle;
-export type TApiTwoWayCall = IGetProfile|IGetFileResource;
+export type TApiTwoWayCall = IGetProfile|IGetFileResource|IHardware;

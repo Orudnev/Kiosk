@@ -2,49 +2,16 @@ import {BrowserWindow } from 'electron';
 import {ICommonReslult} from '../src/apiwrapper';
 import * as path from 'path';
 import fs = require('fs');
+//import SerialPort = require('serialport');
 import {TApiOneWayCall,TApiTwoWayCall} from '../src/apiTypes';
-
-// function MakeOneWayCall(payload:object):void{
-//     (window as any).electronAPI.oneWayCall(payload);
-// }
-// async function MakeTwoWayCall(payload:object){
-//     return (window as any).electronAPI.twoWayCall(payload);
-// }
+//@ts-ignore
+import {UbaDriver} from './drivers/billvalidator/uba/billvalidator';
+//import { SerialPort } from 'serialport';
 
 export interface IProfileItem{
     prop1:string;
 }
 
-// export interface IOtherItem{
-//     prop2:boolean;
-// }
-
-
-// class ApiWrapperClass{
-//     SetTitle(newTitle:string){
-//         MakeOneWayCall({method:'SetTitle',title:newTitle});
-//     }
-
-//     GetProfile():Promise<ICommonReslult<IProfileItem[]>>{
-//         let result = MakeTwoWayCall({method:'GetProfile'});
-//         return result;
-//     }
-
-
-//     Test():Promise<ICommonReslult<IOtherItem[]>>{
-//         let result = MakeTwoWayCall({method:'GetProfile'});
-//         return result;
-//     }
-// }
-
-// export const ApiWrapper = new ApiWrapperClass();
-
-// async function test(){
-//     let response = await ApiWrapper.GetProfile();
-//     response.result[0].
-//     let r1 = await ApiWrapper.Test();
-//     r1.result[0].
-// }
 
 export function HandleOneWayCall(event: any, payload: TApiOneWayCall){
     const webContents = event.sender;
@@ -69,6 +36,8 @@ export async function HandleTwoWayCall(event: any, payload: TApiTwoWayCall){
             return GetProfileImpl();
         case 'GetFileResource':
             return GetFileResourceImpl(payload.filePath);
+        case 'GetHardware':
+            return GetHardware()
     }    
 } 
 
@@ -90,7 +59,21 @@ function GetFileResourceImpl(filePath:string){
     const b64 = fs.readFileSync(fullPath).toString('base64');
     return b64;
 }
-
+function GetHardware(){
+    const billValidator = new UbaDriver({
+        path:"COM11",
+        baudRate: 9600, 
+        databits: 8,
+        stopbit: 1,  
+        parity: 'even'},true);
+    let s = 1;
+    (global as any).bv = billValidator;
+    billValidator.on('onEscrowed',(bv:UbaDriver)=>{
+        let s = bv;
+    });     
+    let s1 = 1;
+    return "";
+}
 
 
 

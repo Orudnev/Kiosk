@@ -9,7 +9,7 @@ import { AppGlobal } from '../../app';
 
 
 export const ScnSelectService: any[] = [
-    (<StpMainForm
+    (<StpMainForm 
         btnFunc={(step: any) => {
             if (store.getState().StepProps.NavGalleryData.lastCriteria.type === 'RootItemsOnly') {
                 return "";

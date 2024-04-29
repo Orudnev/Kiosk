@@ -91,13 +91,13 @@ function App() {
     AppGlobal.navigate("/main_main"); 
     //@ts-ignore
     //window.electronAPI.setTitle("бырбырбыр");
-  }, []);
+  }, []); 
   return (
-    <div>
+    <div> 
       <Navigator />
       <Routes>
         {AllScenarioItems.map((itm: any, index) => {
-          let props = itm.props;
+          let props = itm.props; 
           let url = `/${props.scnItem.props.scnUid}_${props.scnItem.props.scnItemUid}`;
           return (<Route key={"route" + index} element={itm} path={url} />)
         })}

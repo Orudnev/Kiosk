@@ -26,8 +26,8 @@ function createWindow() {
 
     win.webContents.once("dom-ready", async () => {
       await installExtension([REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS])
-        .then((name) => console.log(`Added Extension:  ${name}`))
-        .catch((err) => console.log("An error occurred: ", err))
+        .then((name:any) => console.log(`Added Extension:  ${name}`))
+        .catch((err:any) => console.log("An error occurred: ", err))
         .finally(() => {
           win.webContents.openDevTools();
         });

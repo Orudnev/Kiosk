@@ -236,7 +236,7 @@ export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: an
                 <div className='ng_item-area'>
                     {currentPageItems.map((itm: INavGalleryItemDTO) => {
                         return (
-                            <NavGalleryItem item={itm} themeId={themeId} onClick={(item) => {
+                            <NavGalleryItem key={itm.id} item={itm} themeId={themeId} onClick={(item) => {
                                 let newCriteria: INavGalleryShowItemsCriteria = { type: 'ByParentId', value: item.id };
                                 setDataSourceImpl(allItems, newCriteria);
                                 if(props.onItemSelected){

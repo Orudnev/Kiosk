@@ -61,7 +61,9 @@ class StepMainFormClass extends StepBase<IStpMainFormProps, any> {
             </div>
         );
     }
+
 }
+
 
 function mapStateToProps(state: any, ownProps: any) {
     return { ...state.StepProps.NavGalleryData };
