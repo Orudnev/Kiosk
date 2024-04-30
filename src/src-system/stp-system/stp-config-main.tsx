@@ -1,21 +1,22 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { IStepBaseProps, StepBase } from '../../src-system/scn-engine/step-base';
-import { INavGallery, INavGalleryShowItemsCriteria, NavGallery, TNGridDataSource } from '../components/NavGallery/NavGallery';
-import { INavGalleryItemDTO } from '../components/NavGallery/NavGallery';
+import { IStepBaseProps, StepBase } from '../scn-engine/step-base';
+import { INavGallery,INavGalleryShowItemsCriteria, NavGallery, TNGridDataSource } from '../../src-custom/components/NavGallery/NavGallery';
+import { INavGalleryItemDTO, } from '../../src-custom/components/NavGallery/NavGallery';
+import { INavGalleryData } from '../../src-custom/reducers/step-props';
 import { AppGlobal } from '../../app';
-import { store } from '../reducers';
-import { INavGalleryData } from '../reducers/step-props';
+import { store } from '../../src-custom/reducers';
+
 import { TLButton } from '../../localization';
 
-export interface IStpMainFormProps {
+export interface IStpCfgMainProps {
     dataSource: () => INavGalleryItemDTO[];
     showItemsCriteria: () => INavGalleryShowItemsCriteria;
 }
 
-class StepMainFormClass extends StepBase<IStpMainFormProps, any> {
+class StepCfgMainClass extends StepBase<IStpCfgMainProps, any> {
     ngref: any;
-    constructor(props: IStepBaseProps<IStpMainFormProps>) {
+    constructor(props: IStepBaseProps<IStpCfgMainProps>) {
         super(props);
         this.ngref = createRef();
         this.SetNavGalleryDataSource = this.SetNavGalleryDataSource.bind(this);
@@ -40,10 +41,7 @@ class StepMainFormClass extends StepBase<IStpMainFormProps, any> {
     }
 
     handleAnyClick(btnId: TLButton): void {
-        if(btnId === 'btnHome'){
-            store.dispatch({type:'Act_SP_UpdateNavGalleryShowItemsCriteria',newCriteria:{type:'RootItemsOnly', value:''}});
-            store.dispatch({type:'Act_SP_DefineServiceTreeItems',items:[...store.getState().StepProps.NavGalleryData.items]});
-        }
+        this.props.scnItem.handleStepEvent('NavigateButtonClick',btnId);
     }
 
     renderButtonsInDisableMode() {
@@ -63,13 +61,13 @@ class StepMainFormClass extends StepBase<IStpMainFormProps, any> {
             <div className='pageLayout-body-withnavgallery'>
                 <NavGallery ref={this.ngref} dataSource={items}
                     getThemeId={(currCriteria) => {
-                        return currCriteria.type === 'RootItemsOnly' ? "root-items" : "default";
+                        return "default";
                     }}
                     onItemSelected={(item)=>{
-                        let s = 1;
+                        AppGlobal.navigate(`${item.scenarioId}_${item.scenarioItemId}`)
                     }}
                     onShownItemsChanged={(newCriteria)=>{
-                        store.dispatch({type:'Act_SP_UpdateNavGalleryShowItemsCriteria',newCriteria});
+                        //store.dispatch({type:'Act_SP_UpdateNavGalleryShowItemsCriteria',newCriteria});
                     }}
                 />
             </div>
@@ -83,4 +81,4 @@ function mapStateToProps(state: any, ownProps: any) {
     return { ...state.StepProps.NavGalleryData };
 }
 
-export const StpMainForm = connect(mapStateToProps, {})(StepMainFormClass);
+export const StpCfgMain = connect(mapStateToProps, {})(StepCfgMainClass);

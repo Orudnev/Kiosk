@@ -1,7 +1,9 @@
 import React, { ReactNode } from 'react';
 import { TScenarioItemUid, TScenarioUid } from '../../src-custom/scn-custom';
-
-export type TStepEventName = 'Init'|'DidMount'|'NavigateButtonClick';
+import AllStepItems from '../../src-custom/scn-custom';
+import { StepBase } from './step-base';
+import { AppGlobal } from '../../app';
+export type TStepEventName = 'Init'|'DidMount'|'NavigateButtonClick'|'KeyDown';
 
 export interface IInlineHandler{
     name:TStepEventName;
@@ -15,8 +17,6 @@ export interface IScnItemBaseProps{
     inlineHandlers?:IInlineHandler[];
 }
 
-
-
 export class ScnItemBase{
     step:any = undefined;
     props:IScnItemBaseProps;
@@ -24,8 +24,39 @@ export class ScnItemBase{
         this.props = pr;
     }
 
+    getCurrScnItems():ScnItemBase[]{
+        let scnItems:ScnItemBase[] = AllStepItems.filter(itm=>{
+            const step = (itm as unknown) as StepBase<any,any>;
+            return (step.props.scnItem.props.scnUid === this.props.scnUid);
+        }).map( itms =>{
+            const step = (itms as unknown) as StepBase<any,any>;
+            return step.props.scnItem;
+        })
+        return scnItems;
+    }
+
+    goBack(){
+        let currScnItems = this.getCurrScnItems();
+        let currItemIndex = currScnItems.findIndex(itm=>itm.props.scnItemUid === this.props.scnItemUid);
+        if(currItemIndex > -1){
+            let prevItemIndex = currItemIndex - 1;
+            if(prevItemIndex > -1){
+                let prevItem = currScnItems[prevItemIndex];
+                let url = `${prevItem.props.scnUid}_${prevItem.props.scnItemUid}`;
+                AppGlobal.navigate(url);
+            }
+        }
+    }
+
     launchInlineHandler(hndlrName:TStepEventName,args:any){
         if(!this.props.inlineHandlers){
+            if(hndlrName === 'NavigateButtonClick'){
+                //дефолтный обработчик нажания на кнопку навигации
+                let btnId = args;
+                if(btnId === 'btnBack'){
+                    this.goBack();
+                }
+            }
             return;
         }
         let hitem = this.props.inlineHandlers.find(itm=>itm.name === hndlrName);
@@ -45,6 +76,12 @@ export class ScnItemBase{
                 break;
             case 'DidMount':
                 this.didMount({...args});
+                break;
+            case 'KeyDown':
+                this.launchInlineHandler('KeyDown',args);
+                break;
+            case 'NavigateButtonClick':
+                this.launchInlineHandler('NavigateButtonClick',args);
                 break;
             default:
         }

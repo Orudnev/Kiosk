@@ -12,16 +12,16 @@ export type TScenarioItemUid =
     |'enterPhoneNumber'|'enterIIN'|'enterDate'|'enterTC'|'enterPhoneNumberChange'|'enterPolicyNumber'
     |'enterTransactionNumber'|'enterConfirmPhoneNumber'|'enterDriverLicence'|'configJson'|'testDynamicForm'|'outOfService'
     |'validateKioskReady'|'paymentResult'|'waitOperationCompleting'|'checkPrinter'|'authentication'|'login'|'checkHardware'
-    |'printerNotReady'| 'existPendingEncashment';
+    |'printerNotReady'| 'existPendingEncashment'|'billValidator';
     
 
-function GetAllScenarioItems():ReactNode[]{
+function GetAllStepItems():ReactNode[]{
     let rv=[
         ...ScnSelectService,
-        //...ScnConfig,
+        ...ScnConfig
     ];
     return rv; 
 }
 
-const AllScenarioItems = GetAllScenarioItems();
-export default AllScenarioItems; 
+const AllStepItems = GetAllStepItems();
+export default AllStepItems; 

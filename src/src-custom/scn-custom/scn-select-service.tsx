@@ -41,6 +41,13 @@ export const ScnSelectService: any[] = [
                         let serviceTree = await gItemTree();
                         store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
                     }
+                },
+                {
+                    name: 'KeyDown', handler: async (e)=>{
+                        if(e.ctrlKey && e.altKey && e.key.toLowerCase() == "s"){
+                            AppGlobal.navigate('config_main');
+                        }
+                    }
                 }
             ]
         })}

@@ -15,8 +15,8 @@ export interface INavGalleryItemDTO {
     imgB64?: string;
     scenarioId: TScenarioUid;
     scenarioItemId: TScenarioItemUid | undefined;
-    tag: any;
-    requisitesName: string;
+    tag?: any;
+    requisitesName?: string;
     requisitesMask?: string;
 }
 
@@ -143,7 +143,7 @@ export const NavGalleryItem = (props: INavGalleryItemProps) => {
 
 
 
-
+ 
 export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: any) => {
     let dfltState: INavGalleryItemDTO[] = [];
     const [allItems, setAllItems] = useState<INavGalleryItemDTO[]>(dfltState);

@@ -40,11 +40,11 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         if (!this.disableTimeout) {
             this.startTimeout();
         }
-        this.props.scnItem.handleStepEvent('DidMount', this)
+        this.props.scnItem.handleStepEvent('DidMount', this);
     }
 
     handleAnyClick(btnId:TLButton) {
-        
+        this.props.scnItem.launchInlineHandler('NavigateButtonClick',btnId);
     }
 
     handleTimerTick() {
@@ -183,11 +183,11 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         if (this.props.messageText)
             return this.props.messageText;
         return "";
-    }
+    } 
 
     render() {
         return (
-            <div id="page" className="page-grid-layout">
+            <div id="page" className="page-grid-layout" >
                 <div id="pgHeader" className="pg-header">
                     {this.renderHeader()}
                     <div className="pg-header__title">{this.renderMessage()}</div>

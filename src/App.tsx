@@ -4,7 +4,7 @@ import { NavigateFunction, Route, Routes } from 'react-router';
 import { store, IState } from './src-custom/reducers';
 import { useEffect, useState } from 'react';
 import { UseSelector, useSelector } from 'react-redux/es/hooks/useSelector';
-import AllScenarioItems from './src-custom/scn-custom';
+import AllStepItems from './src-custom/scn-custom';
 import { IStepBaseProps, StepBase } from './src-system/scn-engine/step-base';
 // class AppGlobalClass {
 //   private navfunc:NavigateFunction|undefined = undefined;
@@ -96,7 +96,7 @@ function App() {
     <div> 
       <Navigator />
       <Routes>
-        {AllScenarioItems.map((itm: any, index) => {
+        {AllStepItems.map((itm: any, index) => {
           let props = itm.props; 
           let url = `/${props.scnItem.props.scnUid}_${props.scnItem.props.scnItemUid}`;
           return (<Route key={"route" + index} element={itm} path={url} />)
