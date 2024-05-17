@@ -1,0 +1,11 @@
+.bill-validator-type{
+    min-width: 300px!important;
+}
+
+.bill-validator-serial-port{
+    min-width: 120px!important;
+}
+
+.bill-validator-connect-button button{
+    margin-top: 7px;
+}

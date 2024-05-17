@@ -1,11 +1,16 @@
-import { TApiOneWayCall, TApiTwoWayCall } from "./apiTypes";
+import { TApiOneWayCall, TApiTwoWayCall, TBillValidatorEvent, TDeviceType, TDriverNames } from "./apiTypes";
 
 function MakeOneWayCall(payload:TApiOneWayCall):void{
     (window as any).electronAPI.oneWayCall(payload);
 }
+
+
+
 async function MakeTwoWayCall(payload:TApiTwoWayCall){
     return (window as any).electronAPI.twoWayCall(payload);
 }
+
+
 
 export interface IProfileItemDTO {
     id: string;
@@ -43,8 +48,28 @@ class ApiWrapperClass{
         let result = MakeTwoWayCall({method:'GetFileResource',filePath:fileName});
         return result;
     }
+ 
+    GetSerialPortList():Promise<any>{
+        let result  = MakeTwoWayCall({method:'GetSerialPortList'});
+        return result;
+    }
+
+    HW_CreateDevice(devType:TDeviceType,driverName:TDriverNames,arg:any){
+        let result = MakeTwoWayCall({method:'CreateDevice',deviceType:devType,driverName:driverName,args:arg});
+        return result;
+    }
+
+    SubscribeToBVEvent(event:TBillValidatorEvent,callback:((params:any)=>void)|undefined){
+        (window as any).electronAPI[event]((payload:any)=>{
+            if(callback){
+                callback(payload)
+            }
+        });
+    }   
 
 }
+
+
 
 export const ApiWrapper = new ApiWrapperClass();
 

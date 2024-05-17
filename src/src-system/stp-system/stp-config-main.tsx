@@ -1,3 +1,4 @@
+import './stp-system.css';
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import { IStepBaseProps, StepBase } from '../scn-engine/step-base';

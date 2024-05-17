@@ -11,6 +11,9 @@ const apiName = 'electronAPI';
 
 contextBridge.exposeInMainWorld(apiName, {
   oneWayCall: (payload:object) => ipcRenderer.send('oneWayCall', payload),
-  twoWayCall: (payload:object) => ipcRenderer.invoke('twoWayCall', payload)
+  twoWayCall: (payload:object) => ipcRenderer.invoke('twoWayCall', payload),
+  SerialPortDataReceived: (callback:any) => ipcRenderer.on('SerialPortDataReceived',(evt,value)=>{
+    callback(value);
+  })
 });  
 

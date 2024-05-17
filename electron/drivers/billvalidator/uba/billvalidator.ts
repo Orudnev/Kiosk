@@ -2,18 +2,23 @@ import { PipeParser } from "./pipeParser";
 import { EventEmitter } from "events";
 import { CheckCRC16, arrayToHexDecimal, arrayToString } from "./helpers";
 import * as dto from "./dto";
+import { IBillValidator,TBillValidator,TBillValidatorEvent, TDriverNames } from "../../../../src/apiTypes";
 const Serial = require('serialport') as any;
 
 
 const WatchingIntervalMs = 200;
 
-export class UbaDriver extends EventEmitter{
+
+
+export class UbaDriver extends EventEmitter implements IBillValidator{
+    driverName: TBillValidator = 'UBA';
     serialPort: any;
     pipeParser: any;
     status: dto.IStatus;
     watchingTimer:any;
     LastEscrowedNominal:number;
     LastStackedNominal:number;
+    SerialPortBuffer: number[] = [];
     isDebug:boolean;
     constructor(options:any,debug = false) {
         super();
@@ -26,6 +31,23 @@ export class UbaDriver extends EventEmitter{
         this.LastEscrowedNominal = 0;
         this.LastStackedNominal = 0;
         this.isDebug = debug;
+    }    
+
+    Release():Promise<string>{
+        return new Promise((resolve,reject)=>{
+            this.serialPort.close(()=>{
+                this.removeAllListeners();
+                resolve("ok");
+            })
+        });        
+    }
+
+    On(evt:TBillValidatorEvent, handler:(params:any)=>any){
+        this.on(evt,handler);
+    }
+
+    fireEvent(evtName:TBillValidatorEvent){
+        this.emit(evtName,this);
     }
 
     async onSerialPortOpen() {
@@ -41,7 +63,7 @@ export class UbaDriver extends EventEmitter{
         } else if(isStatus(dto.stEscrow)){
             this.LastEscrowedNominal = dto.GetBanknoteNominal(data);
             this.debug(`Escrowed. banknote accepted:${this.LastEscrowedNominal}`);
-            this.emit('onEscrowed',this);
+            this.fireEvent('Escrowed');
             this.sendCommand(dto.cmdStack);
         } else if(isStatus(dto.stVendValid)){
             this.sendCommand(dto.cmdAck);
@@ -49,9 +71,11 @@ export class UbaDriver extends EventEmitter{
             this.LastStackedNominal = this.LastEscrowedNominal;
             this.LastEscrowedNominal = 0;
             this.debug(`Stacked. banknote stacked:${this.LastEscrowedNominal}`);
-            this.emit('onStacked',this);
+            this.fireEvent('Stacked');
         }
         this.status = data;
+        this.SerialPortBuffer = data;
+        this.fireEvent('SerialPortDataReceived');
     }
 
     async cmdReset(){
@@ -92,7 +116,7 @@ export class UbaDriver extends EventEmitter{
                         this.waitSerialPortData()
                             .then((data:any)=>{
                                 this.debug(`Request:${command.type} Response:${arrayToString(data)}`);
-                                this.onDeviceStatusChanged(data);
+                                this.onDeviceStatusChanged(data);                                
                                 resolve(data);
                             })
                             .catch(err=>{
