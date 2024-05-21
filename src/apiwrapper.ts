@@ -1,4 +1,4 @@
-import { TApiOneWayCall, TApiTwoWayCall, TBillValidatorEvent, TDeviceType, TDriverNames } from "./apiTypes";
+import { TApiOneWayCall, TApiTwoWayCall, TBillValidatorEvent, TBvCommand, TDeviceType, TDriverNames } from "./apiTypes";
 
 function MakeOneWayCall(payload:TApiOneWayCall):void{
     (window as any).electronAPI.oneWayCall(payload);
@@ -38,6 +38,24 @@ class ApiWrapperClass{
     SetTitle(newTitle:string){
         MakeOneWayCall({method:'SetTitle',title:newTitle});
     }
+    HW_CreateDevice(devType:TDeviceType,driverName:TDriverNames,arg:any){
+        let result = MakeTwoWayCall({method:'CreateDevice',deviceType:devType,driverName:driverName,args:arg});
+        return result;
+    }
+
+    BV_SubscribeOnOff(evName:TBillValidatorEvent, onOff:boolean){
+        this.HW_SubscibeOnOff('BillValidator',evName,onOff);
+    }
+
+    BV_Execute(bvCommand:TBvCommand){
+        let result = MakeTwoWayCall({method:'Execute',deviceType:'BillValidator', command:bvCommand});
+        return result;
+    }
+
+    HW_SubscibeOnOff(devType:TDeviceType,evName:string,onOff:boolean){
+        let result = MakeTwoWayCall({method:'SubscribeOnOff',deviceType:devType,eventName:evName,onoff:onOff});
+        return result;
+    }
 
     GetProfile():Promise<ICommonReslult<IProfileItemDTO[]>>{
         let result = MakeTwoWayCall({method:'GetProfile'});
@@ -54,22 +72,16 @@ class ApiWrapperClass{
         return result;
     }
 
-    HW_CreateDevice(devType:TDeviceType,driverName:TDriverNames,arg:any){
-        let result = MakeTwoWayCall({method:'CreateDevice',deviceType:devType,driverName:driverName,args:arg});
-        return result;
+
+    HW_StartMessageTranslation(){
+        (window as any).electronAPI.onMainToRendererMessage(HanleMainToRendererMessage);        
     }
-
-    SubscribeToBVEvent(event:TBillValidatorEvent,callback:((params:any)=>void)|undefined){
-        (window as any).electronAPI[event]((payload:any)=>{
-            if(callback){
-                callback(payload)
-            }
-        });
-    }   
-
 }
 
-
+(window as any).electronAPI.onMainToRendererMessage(HanleMainToRendererMessage); 
+function HanleMainToRendererMessage(payload:any){
+    console.log(payload);
+}
 
 export const ApiWrapper = new ApiWrapperClass();
 

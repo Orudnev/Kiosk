@@ -3,7 +3,7 @@ import { ICommonReslult } from '../src/apiwrapper';
 import * as path from 'path';
 import fs = require('fs');
 //import SerialPort = require('serialport');
-import { IBillValidator, IDeviceDriverFabricItem, TApiOneWayCall, TApiTwoWayCall, TBillValidator, TBillValidatorEvent, TDeviceType, TDriverNames } from '../src/apiTypes';
+import { IBillValidator, ICreateDevice, IDeviceDriverFabricItem, IMessage, ISubscribeOnOff, TApiOneWayCall, TApiTwoWayCall, TBillValidator, TBillValidatorEvent, TBvCommand, TDeviceCommand, TDeviceType, TDriverNames } from '../src/apiTypes';
 //@ts-ignore
 import { UbaDriver } from './drivers/billvalidator/uba/billvalidator';
 import { AllBillValidators } from './drivers/billvalidator';
@@ -23,6 +23,7 @@ export function HandleOneWayCall(event: any, payload: TApiOneWayCall) {
     switch (payload.method) {
         case 'SetTitle':
             win.setTitle(payload.title);
+
     }
 }
 
@@ -40,7 +41,13 @@ export async function HandleTwoWayCall(event: any, payload: TApiTwoWayCall) {
         case 'GetSerialPortList':
             return GetSerialPortList();
         case 'CreateDevice':
-            return CreateDevice(payload.deviceType,payload.driverName,payload.args);
+            return Hardware.CreateDevice(payload.deviceType, payload.driverName, payload.args);
+        case 'Execute':
+            return await Hardware.Execute(payload.deviceType,payload.command)        
+        case 'SubscribeOnOff':
+            let pls = (payload as ISubscribeOnOff);
+            Hardware.SubscribeOnOff(payload.deviceType, pls.eventName, pls.onoff);
+            break;
     }
 }
 
@@ -68,12 +75,12 @@ function GetFileResourceImpl(filePath: string) {
     return b64;
 }
 
-function CreateDevice(deviceType:TDeviceType,driverName:TDriverNames,args:any) {
-    Hardware.CreateDevice(deviceType,driverName,args);
-    return "";
-}
+// function CreateDevice(deviceType:TDeviceType,driverName:TDriverNames,args:any) {
+//     Hardware.CreateDevice(deviceType,driverName,args);
+//     return "";
+// }
 
-function getMainWindow(){
+function getMainWindow() {
     let allWin = BrowserWindow.getAllWindows();
     return allWin[0];
 }
@@ -82,9 +89,10 @@ class DummyBillValidator implements IBillValidator {
     driverName: TBillValidator = 'Undefined';
     LastEscrowedNominal = 0;
     LastStackedNominal = 0;
-    Release = () => new Promise<string>((resolve) => resolve(''));
     On(evt: TBillValidatorEvent, handler: (params: any) => any) { };
-    SerialPortBuffer: number[]=[];
+    Off(evt: TBillValidatorEvent) { };
+    SerialPortBuffer: number[] = [];
+    Execute(command: TBvCommand){return new Promise((resolve)=>{resolve(true)})};
 }
 
 class HardwareClass {
@@ -98,13 +106,63 @@ class HardwareClass {
         }
         switch (deviceType) {
             case 'BillValidator':
-                if (this.BillValidator.driverName !== 'Undefined') {
-                    this.BillValidator.Release();
-                }
-                this.BillValidator = bvfItm.getInstance(args);
-                this.BillValidator.On('SerialPortDataReceived',(bvInstance)=>{
-                    getMainWindow().webContents.send('SerialPortDataReceived',[...bvInstance.SerialPortBuffer]);    
+                return new Promise((resolve,reject)=>{
+                    try{
+                        if (this.BillValidator.driverName !== 'Undefined') {
+                            this.BillValidator.Execute('Release').then(result=>{
+                                this.BillValidator = bvfItm?.getInstance(args);
+                                resolve(true);
+                                return;
+                            });
+                        } 
+                        this.BillValidator = bvfItm?.getInstance(args);
+                        resolve(true);
+                    } catch(error){
+                        reject(error);
+                    }    
                 });
+                //
+                break;
+            case 'BillPrinter':
+                throw new Error('Not implemented');
+        }
+    }
+    Execute(deviceType: TDeviceType, command:TDeviceCommand){
+        switch (deviceType) {
+            case 'BillValidator':
+                let bvCmd = command as TBvCommand;
+                return this.BillValidator.Execute(bvCmd);
+            case 'BillPrinter':
+                throw new Error('Not implemented');
+        }
+    }
+    SubscribeOnOff(deviceType: TDeviceType, eventName: string, onoff: boolean) {
+        switch (deviceType) {
+            case 'BillValidator':
+                let evName = eventName as TBillValidatorEvent;
+                let getPayload: any = undefined;
+                if (onoff) {
+                    switch (evName) {
+                        case 'SerialPortDataReceived':
+                            getPayload = (bvInstance: any) => {
+                                let message: IMessage = { sender: 'BillValidator', messageID: 'SerialPortDataReceived', payload: [...bvInstance.SerialPortBuffer] };
+                                return message;
+                            };
+                            break;
+                        case 'Escrowed':
+                        case 'Stacked':
+                    }
+                    this.BillValidator.On(evName, (bvInstance) => {
+                        let pl = bvInstance;
+                        if (getPayload) {
+                            pl = getPayload(bvInstance);
+                        }
+                        let message: IMessage = { sender: 'BillValidator', messageID: 'SerialPortDataReceived', payload: pl };
+                        getMainWindow().webContents.send('messageChannel', message);
+                    });
+                } else {
+                    this.BillValidator.Off(evName);
+                }
                 break;
             case 'BillPrinter':
                 throw new Error('Not implemented');

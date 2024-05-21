@@ -3,6 +3,32 @@ export interface ISetTitle{
     title:string;
 }
 
+export interface ICreateDevice{
+    method:'CreateDevice';
+    deviceType:TDeviceType;
+    driverName:TDriverNames;
+    args:any;
+}
+
+export type TBvCommand = 'StartReceiveMoney'|'StopReceiveMoney'|'Release'|'Test';
+
+export type TDeviceCommand = TBvCommand;
+
+export interface IExecute{
+    method:'Execute';
+    deviceType:TDeviceType;
+    command:TDeviceCommand;    
+}
+
+
+export interface ISubscribeOnOff{
+    method:'SubscribeOnOff';
+    deviceType:TDeviceType;
+    eventName:string;
+    onoff:boolean;
+}
+
+
 export interface IGetProfileResponse{
     serviceList:string[];
 }
@@ -20,12 +46,7 @@ export interface IGetSerialPortList{
 }
 
 
-export interface ICreateDevice{
-    method:'CreateDevice';
-    deviceType:TDeviceType;
-    driverName:TDriverNames;
-    args:any;
-}
+
 
 export enum EDeviceType {
     BillValidator = 'BillValidator',
@@ -67,7 +88,7 @@ export interface IAppSettings {
 }
 
 export type TApiOneWayCall = ISetTitle;
-export type TApiTwoWayCall = IGetProfile|IGetFileResource|IGetSerialPortList|ICreateDevice;
+export type TApiTwoWayCall = IGetProfile|IGetFileResource|IGetSerialPortList|ICreateDevice|ISubscribeOnOff|IExecute;
 
 
 export type TBillValidatorEvent = 'SerialPortDataReceived'|'Escrowed'|'Stacked';
@@ -77,7 +98,8 @@ export interface IBillValidator{
     LastStackedNominal:number;
     SerialPortBuffer:number[];
     On:(evt:TBillValidatorEvent, handler:(params:any)=>any)=>void;
-    Release:()=>Promise<string>;
+    Off:(evt:TBillValidatorEvent)=>void;
+    Execute:(command:TBvCommand) => Promise<any>;
 }
 
 export type TDriverNames = TBillValidator|TBillPrinter;
@@ -85,5 +107,11 @@ export interface IDeviceDriverFabricItem {
     deviceType:TDeviceType;
     driverName: TDriverNames;
     getInstance: (args:any) => any;
+}
+
+export interface IMessage{
+    sender:TDeviceType;
+    messageID:TBillValidatorEvent;
+    payload:any;
 }
 

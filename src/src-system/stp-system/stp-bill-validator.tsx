@@ -133,7 +133,14 @@ class StepBillValidatorClass extends StepBase<any, any> {
         serialPort:'COM11'    
     }
     componentWillUnmount(): void {
-        ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',undefined);
+        //ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',undefined);
+        //ApiWrapper.HW_SubscibeOnOff('BillValidator','SerialPortDataReceived',false);
+        ApiWrapper.BV_Execute('Release').then(result=>{
+            console.log(result);
+        })
+        .catch((err)=>{
+            console.log(err);
+        });
     }
 
     renderBody(): JSX.Element {
@@ -153,9 +160,18 @@ class StepBillValidatorClass extends StepBase<any, any> {
                     <Button variant="outlined"
                         onClick={()=>{
                             ApiWrapper.HW_CreateDevice('BillValidator',this.fields.driverName as TDriverNames,this.fields.serialPort)
-                            ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',(data)=>{
-                                console.log(data);
-                            });
+                            .then((res)=>{
+                                let s = res;
+                                setTimeout(()=>{
+                                    ApiWrapper.BV_Execute('Test').then((result)=>{
+                                        console.log(result);
+                                    });    
+                                },1000);
+                            })
+                            //ApiWrapper.BV_SubscribeOnOff('SerialPortDataReceived',true);
+                            // ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',(data)=>{
+                            //     console.log(data);
+                            // });
                         }}
                     >
                         Connect
