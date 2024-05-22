@@ -115,3 +115,5 @@ export interface IMessage{
     payload:any;
 }
 
+export type TDeviceCheckStatus = 'undefined'|'checking'|'connected'|'no-answer';
+

@@ -8,7 +8,8 @@ import Button from '@mui/material/Button';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { ApiWrapper } from '../../apiwrapper';
-import { BillValidatorTypesList, TDriverNames } from '../../apiTypes';
+import { BillValidatorTypesList, TDeviceCheckStatus, TDriverNames } from '../../apiTypes';
+
 
 
 interface ISerialPortListProps {
@@ -76,8 +77,8 @@ function SelectFromList(props: ISelectFromListProps) {
 
 function SelectSerialPortList(props: ISerialPortListProps) {
     let getPortList = new Promise<string[]>((resolve, reject) => {
-        ApiWrapper.GetSerialPortList().then(portList=>{
-            let result  = portList.map((p:any)=>p.path);
+        ApiWrapper.GetSerialPortList().then(portList => {
+            let result = portList.map((p: any) => p.path);
             resolve(result);
         })
     });
@@ -126,21 +127,58 @@ function SelectSerialPortListOld(props: ISerialPortListProps) {
     );
 }
 
+interface ICheckButtonProps {
+    checkStatus: TDeviceCheckStatus;
+    onClick: () => void;
+}
+
+function CheckButton(props: ICheckButtonProps) {
+    let stateText = "";
+    if(props.checkStatus === 'connected' || props.checkStatus === 'no-answer'){
+        stateText = props.checkStatus;
+    }
+    return (
+        <FormControl sx={{ m: 1 }} className='bill-validator-connect-button'>
+            <Button
+                variant="outlined"
+                onClick={() => {
+                    props.onClick();
+                }}
+            >
+                <div className='caption'>Check connection</div>
+                <div className={`state ${props.checkStatus === 'undefined' ? 'hidden' : 'state__'+props.checkStatus}`}>
+                    {props.checkStatus === 'checking'
+                        ? (<img />)
+                        : (<></>)
+                    }
+                    {stateText}
+                </div>
+            </Button>
+        </FormControl>
+    );
+}
 
 class StepBillValidatorClass extends StepBase<any, any> {
     fields = {
-        driverName:'UBA',
-        serialPort:'COM11'    
+        driverName: 'UBA',
+        serialPort: 'COM11'
     }
+    constructor(props: any) {
+        super(props);
+        this.state = {
+            checkStatus: 'undefined'
+        }
+    }
+
     componentWillUnmount(): void {
         //ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',undefined);
         //ApiWrapper.HW_SubscibeOnOff('BillValidator','SerialPortDataReceived',false);
-        ApiWrapper.BV_Execute('Release').then(result=>{
+        ApiWrapper.BV_Execute('Release').then(result => {
             console.log(result);
         })
-        .catch((err)=>{
-            console.log(err);
-        });
+            .catch((err) => {
+                console.log(err);
+            });
     }
 
     renderBody(): JSX.Element {
@@ -148,35 +186,32 @@ class StepBillValidatorClass extends StepBase<any, any> {
             <div>
                 <SelectFromList caption='Bill validator type:'
                     cssClass='bill-validator-type'
-                    getList={new Promise(resolve=>{resolve([...BillValidatorTypesList])})}
-                    selectedValue={this.fields.driverName} onSelectedValueChanged={(newValue) => { 
+                    getList={new Promise(resolve => { resolve([...BillValidatorTypesList]) })}
+                    selectedValue={this.fields.driverName} onSelectedValueChanged={(newValue) => {
                         this.fields.driverName = newValue;
                     }}
                 />
-                <SelectSerialPortList selectedPortName='COM11' onSelectedPortChanged={(newValue) => { 
+                <SelectSerialPortList selectedPortName='COM11' onSelectedPortChanged={(newValue) => {
                     this.fields.serialPort = newValue;
                 }} />
-                <FormControl sx={{ m: 1 }} className='bill-validator-connect-button'>
-                    <Button variant="outlined"
-                        onClick={()=>{
-                            ApiWrapper.HW_CreateDevice('BillValidator',this.fields.driverName as TDriverNames,this.fields.serialPort)
-                            .then((res)=>{
-                                let s = res;
-                                setTimeout(()=>{
-                                    ApiWrapper.BV_Execute('Test').then((result)=>{
-                                        console.log(result);
-                                    });    
-                                },1000);
-                            })
-                            //ApiWrapper.BV_SubscribeOnOff('SerialPortDataReceived',true);
-                            // ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',(data)=>{
-                            //     console.log(data);
-                            // });
-                        }}
-                    >
-                        Connect
-                    </Button>
-                </FormControl>
+                <CheckButton checkStatus={this.state.checkStatus} onClick={() => {
+                    this.setState({ checkStatus: 'checking' });
+                    ApiWrapper.HW_CreateDevice('BillValidator', this.fields.driverName as TDriverNames, this.fields.serialPort)
+                        .then((res) => {
+                            setTimeout(() => {
+                                ApiWrapper.BV_Execute('Test').then((result) => {
+                                    if (result)
+                                        this.setState({ checkStatus: 'connected' });
+                                    else
+                                        this.setState({ checkStatus: 'no-answer' });
+                                });
+                            }, 1000);
+                        })
+                    //ApiWrapper.BV_SubscribeOnOff('SerialPortDataReceived',true);
+                    // ApiWrapper.SubscribeToBVEvent('SerialPortDataReceived',(data)=>{
+                    //     console.log(data);
+                    // });
+                }} />
             </div>
         );
     }

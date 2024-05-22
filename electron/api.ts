@@ -114,6 +114,7 @@ class HardwareClass {
                                 resolve(true);
                                 return;
                             });
+                            return;
                         } 
                         this.BillValidator = bvfItm?.getInstance(args);
                         resolve(true);

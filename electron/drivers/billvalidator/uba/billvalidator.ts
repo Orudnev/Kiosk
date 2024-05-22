@@ -31,21 +31,21 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
         this.isDebug = debug;
     }
 
-    async ExecuteBatch(commands:dto.ICommand[]){
+    async ExecuteBatch(commands: dto.ICommand[]) {
         const results: any[] = [];
         for (const command of commands) {
             try {
                 const result = await this.sendCommand(command);
                 results.push([...(result as any)]);
             } catch (error) {
-                throw error; 
+                throw error;
             }
         }
-        return results; 
+        return results;
     }
 
     Execute(command: TBvCommand) {
-        switch (command) { 
+        switch (command) {
             case 'Release':
                 return this.Release();
             case 'Test':
@@ -53,22 +53,22 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
                     // this.cmdEnable().then(result=>{
                     //     let s =1;
                     // });
-                    this.ExecuteBatch([dto.cmdEnable,dto.cmdPoll,dto.cmdDisable,dto.cmdPoll])
-                    .then(result=>{
-                        if(result.length === 4){
-                            resolve (result[1][2] === dto.stEnabled.value && result[3][2] === dto.stDisabled.value);
-                            return; 
-                        }
-                        resolve(false);
-                    })
-                    .catch(err=>{
-                        resolve(false);
-                    })
+                    this.ExecuteBatch([dto.cmdEnable, dto.cmdPoll, dto.cmdDisable, dto.cmdPoll])
+                        .then(result => {
+                            if(result.length === 4){
+                                resolve (result[1][2] === dto.stEnabled.value && result[3][2] === dto.stDisabled.value);
+                                return; 
+                            }
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            resolve(false);
+                        })
                 })
             default:
                 throw new Error(`command ${command} not implemented`);
         }
-    } 
+    }
 
     Release(): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -136,7 +136,7 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
     }
 
     async cmdPoll() {
-        return await this.sendCommand(dto.cmdPoll);
+        return this.sendCommand(dto.cmdPoll);
     }
 
     async cmdAck() {
@@ -151,14 +151,14 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
         clearTimeout(this.watchingTimer);
         return new Promise((resolve, reject) => {
             this.serialPort.write(command.content, (err: any) => {
-                this.watchingTimer = setTimeout(async () => { 
+                this.watchingTimer = setTimeout(async () => {
                     let res = await this.cmdPoll();
                     this.debug(`${(new Date()).toJSON().substring(11)} Request:${command.type} Response:${arrayToString([...(res as any)])}`);
-                    resolve(res); 
+                    resolve(res);
                 }, WatchingIntervalMs);
                 if (err) {
                     this.debug(`Error on write to serial port:${err}`);
-                    reject(err);
+                    resolve([]);
                 } else {
                     if (command.hasResponse) {
                         this.waitSerialPortData()

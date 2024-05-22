@@ -1,28 +1,6 @@
 import { IBillValidator, IDeviceDriverFabricItem, TBillValidator, TDeviceType, TDriverNames } from "../../../src/apiTypes";
 import { UbaDriver } from "./uba/billvalidator";
 
-
-
-
-export const BillValidatorsold = {
-    UBA: {
-        GetInstance: (portName: string) => {
-            const billValidator = new UbaDriver({
-                path: portName,
-                baudRate: 9600,
-                databits: 8,
-                stopbit: 1,
-                parity: 'even'
-            }, true);
-            return billValidator;
-        }
-    },
-    ICTL83: {
-        GetInstance: (portName: string) => { throw new Error('Not implemented') }
-    }
-};
-
-
 export const AllBillValidators:IDeviceDriverFabricItem[] = [
     {
         deviceType:'BillValidator',
