@@ -6,14 +6,22 @@ export const AllBillValidators:IDeviceDriverFabricItem[] = [
         deviceType:'BillValidator',
         driverName:'UBA',
         getInstance:(portName: string) => {
-            const billValidator = new UbaDriver({
-                path: portName,
-                baudRate: 9600,
-                databits: 8,
-                stopbit: 1,
-                parity: 'even'
-            }, true);
-            return billValidator;
+            return new Promise(resolve=>{
+                const billValidator = new UbaDriver({
+                    path: portName,
+                    baudRate: 9600,
+                    databits: 8,
+                    stopbit: 1,
+                    parity: 'even'
+                }, true);
+                    billValidator.Open((err:any)=>{
+                    if(err){
+                        resolve(null);
+                        return;
+                    }
+                    resolve(billValidator);
+                    });
+            });
         }
     },
     {

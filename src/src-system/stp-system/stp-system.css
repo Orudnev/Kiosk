@@ -44,7 +44,77 @@
     content: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyMDAgMjAwJz48Y2lyY2xlIGZpbGw9JyMwRTA3NjQnIHN0cm9rZT0nIzBFMDc2NCcgc3Ryb2tlLXdpZHRoPScxNScgcj0nMTUnIGN4PSc0MCcgY3k9JzY1Jz48YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSdjeScgY2FsY01vZGU9J3NwbGluZScgZHVyPScyJyB2YWx1ZXM9JzY1OzEzNTs2NTsnIGtleVNwbGluZXM9Jy41IDAgLjUgMTsuNSAwIC41IDEnIHJlcGVhdENvdW50PSdpbmRlZmluaXRlJyBiZWdpbj0nLS40Jz48L2FuaW1hdGU+PC9jaXJjbGU+PGNpcmNsZSBmaWxsPScjMEUwNzY0JyBzdHJva2U9JyMwRTA3NjQnIHN0cm9rZS13aWR0aD0nMTUnIHI9JzE1JyBjeD0nMTAwJyBjeT0nNjUnPjxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9J2N5JyBjYWxjTW9kZT0nc3BsaW5lJyBkdXI9JzInIHZhbHVlcz0nNjU7MTM1OzY1Oycga2V5U3BsaW5lcz0nLjUgMCAuNSAxOy41IDAgLjUgMScgcmVwZWF0Q291bnQ9J2luZGVmaW5pdGUnIGJlZ2luPSctLjInPjwvYW5pbWF0ZT48L2NpcmNsZT48Y2lyY2xlIGZpbGw9JyMwRTA3NjQnIHN0cm9rZT0nIzBFMDc2NCcgc3Ryb2tlLXdpZHRoPScxNScgcj0nMTUnIGN4PScxNjAnIGN5PSc2NSc+PGFuaW1hdGUgYXR0cmlidXRlTmFtZT0nY3knIGNhbGNNb2RlPSdzcGxpbmUnIGR1cj0nMicgdmFsdWVzPSc2NTsxMzU7NjU7JyBrZXlTcGxpbmVzPScuNSAwIC41IDE7LjUgMCAuNSAxJyByZXBlYXRDb3VudD0naW5kZWZpbml0ZScgYmVnaW49JzAnPjwvYW5pbWF0ZT48L2NpcmNsZT48L3N2Zz4=');
 }
 
-
 .hidden{
     visibility: hidden;
+}
+
+.indicator{
+    margin: 8px;
+    border:solid 1px rgba(0, 0, 0, 0.23);
+    border-radius: 4px;
+    display: inline-block;
+    height: 56px;
+    line-height: 56px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.indicator .caption{
+    display: inline-block;
+    color: rgba(0, 0, 0, 0.6);
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 12px;
+    position: relative;
+    top: -32px;
+    left: -109px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: white;    
+}
+
+.indicator-with-reset-button{
+    position: absolute;
+    margin: 8px;
+    border:solid 1px rgba(0, 0, 0, 0.23);
+    border-radius: 4px;
+    display: inline-block;
+    height: 56px;
+    line-height: 56px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.indicator-with-reset-button button{
+    display: block;
+    position: absolute;
+    top: 9px;
+    left: 152px;    
+}
+
+.indicator-with-reset-button .caption{
+    display: block;
+    width: fit-content;
+    color: rgba(0, 0, 0, 0.6);
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 12px;
+    position: absolute;
+    top: -8px;
+    left: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: white;    
+}
+
+.bill-validator-status{
+    width: 200px;
+}
+
+.bill-validator-last-banknote{
+    width: 200px;
 }

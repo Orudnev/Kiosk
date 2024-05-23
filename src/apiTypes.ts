@@ -90,13 +90,15 @@ export interface IAppSettings {
 export type TApiOneWayCall = ISetTitle;
 export type TApiTwoWayCall = IGetProfile|IGetFileResource|IGetSerialPortList|ICreateDevice|ISubscribeOnOff|IExecute;
 
+export type TBillValidatorStatus = 'Undefined'|'Enabled'|'Disabled'|'Accepting'|'Escrow'|'Stacking'|'VendValid'|'Rejecting'|'Stacked'|'StackerFull'|'StackerEmptied'|'StackerUnplugged'|'StackerPlugged'|'Cheated'|'Jammed';
 
-export type TBillValidatorEvent = 'SerialPortDataReceived'|'Escrowed'|'Stacked';
+export type TBillValidatorEvent = 'Escrowed'|'Stacked'|'StatusChanged';
 export interface IBillValidator{
     driverName:TBillValidator;
     LastEscrowedNominal:number;
     LastStackedNominal:number;
     SerialPortBuffer:number[];
+    GetStatus:()=>TBillValidatorStatus;
     On:(evt:TBillValidatorEvent, handler:(params:any)=>any)=>void;
     Off:(evt:TBillValidatorEvent)=>void;
     Execute:(command:TBvCommand) => Promise<any>;
@@ -106,7 +108,7 @@ export type TDriverNames = TBillValidator|TBillPrinter;
 export interface IDeviceDriverFabricItem {
     deviceType:TDeviceType;
     driverName: TDriverNames;
-    getInstance: (args:any) => any;
+    getInstance: (args:any) => Promise<any>;
 }
 
 export interface IMessage{
@@ -116,4 +118,22 @@ export interface IMessage{
 }
 
 export type TDeviceCheckStatus = 'undefined'|'checking'|'connected'|'no-answer';
+
+export const AllBvStatuses = [
+    'Undefined' , 'Enabled' , 'Disabled' , 'Accepting' ,
+    'Escrow' , 'Stacking' , 'VendValid' , 'Rejecting' ,
+    'Stacked' , 'StackerFull' , 'StackerUnplugged' ,
+    'StackerPlugged' , 'Cheated' , 'Jammed'] as const;
+
+export type TBvStatus = typeof AllBvStatuses[number];
+
+export interface IBvStatusItem {
+    type: TBvStatus;
+    value: number;
+}
+
+export interface IMessageHandler{
+    handlerUid:string;
+    handler:(message:IMessage)=>void;
+}
 

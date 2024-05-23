@@ -2,8 +2,10 @@ import { PipeParser } from "./pipeParser";
 import { EventEmitter } from "events";
 import { CheckCRC16, arrayToHexDecimal, arrayToString } from "./helpers";
 import * as dto from "./dto";
-import { IBillValidator, TBillValidator, TBillValidatorEvent, TBvCommand, TDriverNames } from "../../../../src/apiTypes";
+import { IBillValidator, IBvStatusItem, IMessage, TBillValidator, TBillValidatorEvent, TBvCommand, TBvStatus, TDriverNames } from "../../../../src/apiTypes";
+import { Hardware } from "../../../api";
 const Serial = require('serialport') as any;
+
 
 
 const WatchingIntervalMs = 200;
@@ -12,7 +14,7 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
     driverName: TBillValidator = 'UBA';
     serialPort: any;
     pipeParser: any;
-    status: dto.IStatus;
+    status: IBvStatusItem;
     watchingTimer: any;
     LastEscrowedNominal: number;
     LastStackedNominal: number;
@@ -20,16 +22,30 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
     isDebug: boolean;
     constructor(options: any, debug = false) {
         super();
+        options.autoOpen = false;
         this.serialPort = new Serial.SerialPort(options);
         this.onSerialPortOpen = this.onSerialPortOpen.bind(this);
-        this.serialPort.on('open', this.onSerialPortOpen);
         this.pipeParser = this.serialPort.pipe(new PipeParser() as any);
-        this.status = dto.stUndefined;
+        this.status = {type:'Undefined',value:-1};
         this.watchingTimer = null;
         this.LastEscrowedNominal = 0;
         this.LastStackedNominal = 0;
         this.isDebug = debug;
     }
+
+    Open(callback:any){
+        return this.serialPort.open(callback);
+    }
+
+    async onSerialPortOpen() {
+        this.sendCommand(dto.cmdReset);
+        this.sendCommand(dto.cmdDisable);
+    }
+
+
+    GetStatus(){
+        return this.status.type;
+    };
 
     async ExecuteBatch(commands: dto.ICommand[]) {
         const results: any[] = [];
@@ -55,8 +71,9 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
                     // });
                     this.ExecuteBatch([dto.cmdEnable, dto.cmdPoll, dto.cmdDisable, dto.cmdPoll])
                         .then(result => {
-                            if(result.length === 4){
-                                resolve (result[1][2] === dto.stEnabled.value && result[3][2] === dto.stDisabled.value);
+                            if(result.length === 4){                                
+                                let rv = (dto.GetStatusType(result[1][2]) === 'Enabled') && (dto.GetStatusType(result[3][2]) === 'Disabled');
+                                resolve(rv);
                                 return; 
                             }
                             resolve(true);
@@ -65,6 +82,10 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
                             resolve(false);
                         })
                 })
+            case 'StartReceiveMoney':
+                return this.sendCommand(dto.cmdEnable);
+            case 'StopReceiveMoney':
+                return this.sendCommand(dto.cmdDisable);
             default:
                 throw new Error(`command ${command} not implemented`);
         }
@@ -90,36 +111,59 @@ export class UbaDriver extends EventEmitter implements IBillValidator {
         this, this.removeAllListeners(evt);
     }
 
-    fireEvent(evtName: TBillValidatorEvent) {
-        this.emit(evtName, this);
+    fireEvent(evtName: TBillValidatorEvent,payloadData:any) {
+        //this.emit(evtName, this);
+        let message:IMessage = {sender:'BillValidator',messageID:evtName,payload:payloadData};
+        Hardware.SendMessage(message);
     }
 
-    async onSerialPortOpen() {
-        this.sendCommand(dto.cmdReset);
-        this.sendCommand(dto.cmdDisable);
-    }
 
     onDeviceStatusChanged(data: any) {
-        let receivedStatus = data[2];
-        let isStatus = (status: dto.IStatus) => { return status.value == receivedStatus };
-        if (isStatus(dto.stAccepting)) {
-            this.debug("Accepting");
-        } else if (isStatus(dto.stEscrow)) {
-            this.LastEscrowedNominal = dto.GetBanknoteNominal(data);
-            this.debug(`Escrowed. banknote accepted:${this.LastEscrowedNominal}`);
-            this.fireEvent('Escrowed');
-            this.sendCommand(dto.cmdStack);
-        } else if (isStatus(dto.stVendValid)) {
-            this.sendCommand(dto.cmdAck);
-        } else if (isStatus(dto.stStacked)) {
-            this.LastStackedNominal = this.LastEscrowedNominal;
-            this.LastEscrowedNominal = 0;
-            this.debug(`Stacked. banknote stacked:${this.LastEscrowedNominal}`);
-            this.fireEvent('Stacked');
+        let isStatusChanged = data.some((itm:any,idx:number) => {
+            if(isStatusChanged){
+                return true;
+            }
+            if(idx > this.SerialPortBuffer.length -1){
+                isStatusChanged = true;
+                return true; 
+            }
+            return itm !== this.SerialPortBuffer[idx]
+        });
+        if(!isStatusChanged){
+            return; 
         }
-        this.status = data;
-        this.SerialPortBuffer = data;
-        this.fireEvent('SerialPortDataReceived');
+        let receivedStatus = data[2];
+        let newStatus = dto.allStatuses.find(itm=>itm.value === receivedStatus);
+        if (!newStatus){
+            newStatus = {type:'Undefined',value:-1};
+        }
+        this.status = newStatus;
+        this.fireEvent('StatusChanged',this.status.type);
+        switch(newStatus?.type){
+            case 'Escrow':
+                this.LastEscrowedNominal = dto.GetBanknoteNominal(data);
+                this.debug(`Escrowed. banknote accepted:${this.LastEscrowedNominal}`);
+                this.fireEvent('Escrowed',this.LastEscrowedNominal);
+                setTimeout(() => {
+                    this.sendCommand(dto.cmdStack);    
+                }, WatchingIntervalMs);                
+                break;
+            case 'VendValid':
+                setTimeout(() => {
+                    this.sendCommand(dto.cmdAck);    
+                }, WatchingIntervalMs);                
+                break;
+            case 'Stacked':
+                this.LastStackedNominal = this.LastEscrowedNominal;
+                this.LastEscrowedNominal = 0;
+                this.debug(`Stacked. banknote stacked:${this.LastEscrowedNominal}`);
+                this.fireEvent('Stacked',this.LastStackedNominal);
+                break;
+            default:
+                this.debug(newStatus?.type);
+        }        
+
+        this.SerialPortBuffer = [...data];
     }
 
     async cmdReset() {

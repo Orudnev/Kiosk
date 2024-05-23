@@ -3,7 +3,7 @@ import { ICommonReslult } from '../src/apiwrapper';
 import * as path from 'path';
 import fs = require('fs');
 //import SerialPort = require('serialport');
-import { IBillValidator, ICreateDevice, IDeviceDriverFabricItem, IMessage, ISubscribeOnOff, TApiOneWayCall, TApiTwoWayCall, TBillValidator, TBillValidatorEvent, TBvCommand, TDeviceCommand, TDeviceType, TDriverNames } from '../src/apiTypes';
+import { IBillValidator, ICreateDevice, IDeviceDriverFabricItem, IMessage, ISubscribeOnOff, TApiOneWayCall, TApiTwoWayCall, TBillValidator, TBillValidatorEvent, TBillValidatorStatus, TBvCommand, TDeviceCommand, TDeviceType, TDriverNames } from '../src/apiTypes';
 //@ts-ignore
 import { UbaDriver } from './drivers/billvalidator/uba/billvalidator';
 import { AllBillValidators } from './drivers/billvalidator';
@@ -43,7 +43,7 @@ export async function HandleTwoWayCall(event: any, payload: TApiTwoWayCall) {
         case 'CreateDevice':
             return Hardware.CreateDevice(payload.deviceType, payload.driverName, payload.args);
         case 'Execute':
-            return await Hardware.Execute(payload.deviceType,payload.command)        
+            return await Hardware.Execute(payload.deviceType, payload.command)
         case 'SubscribeOnOff':
             let pls = (payload as ISubscribeOnOff);
             Hardware.SubscribeOnOff(payload.deviceType, pls.eventName, pls.onoff);
@@ -89,10 +89,11 @@ class DummyBillValidator implements IBillValidator {
     driverName: TBillValidator = 'Undefined';
     LastEscrowedNominal = 0;
     LastStackedNominal = 0;
+    GetStatus() { return 'Undefined' as TBillValidatorStatus };
     On(evt: TBillValidatorEvent, handler: (params: any) => any) { };
     Off(evt: TBillValidatorEvent) { };
     SerialPortBuffer: number[] = [];
-    Execute(command: TBvCommand){return new Promise((resolve)=>{resolve(true)})};
+    Execute(command: TBvCommand) { return new Promise((resolve) => { resolve(true) }) };
 }
 
 class HardwareClass {
@@ -101,26 +102,32 @@ class HardwareClass {
     BillPrinter: any = undefined;
     CreateDevice(deviceType: TDeviceType, driverName: TDriverNames, args: any) {
         let bvfItm = this.AllDevices.find(itm => itm.deviceType == deviceType && itm.driverName == driverName);
+        let self = this;
         if (!bvfItm) {
             throw new Error(`Unknown type "${deviceType}.${driverName}"`);
         }
         switch (deviceType) {
             case 'BillValidator':
-                return new Promise((resolve,reject)=>{
-                    try{
-                        if (this.BillValidator.driverName !== 'Undefined') {
-                            this.BillValidator.Execute('Release').then(result=>{
-                                this.BillValidator = bvfItm?.getInstance(args);
-                                resolve(true);
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (self.BillValidator.driverName !== 'Undefined') {
+                            // Если экземпляр драйвера уже создан, освобождаем его и создаем заново
+                            self.BillValidator.Execute('Release').then(result => {
+                                bvfItm?.getInstance(args).then(bvinstance => {
+                                    self.BillValidator = bvinstance;
+                                    resolve(self.BillValidator ? true : false);
+                                });
                                 return;
                             });
                             return;
-                        } 
-                        this.BillValidator = bvfItm?.getInstance(args);
-                        resolve(true);
-                    } catch(error){
-                        reject(error);
-                    }    
+                        }
+                        bvfItm?.getInstance(args).then(bvinstance => {
+                            self.BillValidator = bvinstance;
+                            resolve(self.BillValidator ? true : false);
+                        });
+                    } catch (error) {
+                        resolve(false);
+                    }
                 });
                 //
                 break;
@@ -128,7 +135,7 @@ class HardwareClass {
                 throw new Error('Not implemented');
         }
     }
-    Execute(deviceType: TDeviceType, command:TDeviceCommand){
+    Execute(deviceType: TDeviceType, command: TDeviceCommand) {
         switch (deviceType) {
             case 'BillValidator':
                 let bvCmd = command as TBvCommand;
@@ -137,6 +144,9 @@ class HardwareClass {
                 throw new Error('Not implemented');
         }
     }
+    SendMessage(message: IMessage) {
+        getMainWindow().webContents.send('messageChannel', message);
+    }
     SubscribeOnOff(deviceType: TDeviceType, eventName: string, onoff: boolean) {
         switch (deviceType) {
             case 'BillValidator':
@@ -144,21 +154,23 @@ class HardwareClass {
                 let getPayload: any = undefined;
                 if (onoff) {
                     switch (evName) {
-                        case 'SerialPortDataReceived':
-                            getPayload = (bvInstance: any) => {
-                                let message: IMessage = { sender: 'BillValidator', messageID: 'SerialPortDataReceived', payload: [...bvInstance.SerialPortBuffer] };
-                                return message;
-                            };
+                        case 'StatusChanged':
+                            getPayload = (bvInstance: any) => bvInstance.GetStatus();
                             break;
                         case 'Escrowed':
+                            break;
                         case 'Stacked':
+                            getPayload = (bvInstance: any) => {
+                                let message: IMessage = { sender: 'BillValidator', messageID: 'Stacked', payload: bvInstance.LastStackedNominal };
+                                return message;
+                            };
                     }
                     this.BillValidator.On(evName, (bvInstance) => {
-                        let pl = bvInstance;
+                        let pl = '';
                         if (getPayload) {
                             pl = getPayload(bvInstance);
                         }
-                        let message: IMessage = { sender: 'BillValidator', messageID: 'SerialPortDataReceived', payload: pl };
+                        let message: IMessage = { sender: 'BillValidator', messageID: evName, payload: pl };
                         getMainWindow().webContents.send('messageChannel', message);
                     });
                 } else {

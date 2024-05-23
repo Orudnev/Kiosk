@@ -1,4 +1,4 @@
-import { TApiOneWayCall, TApiTwoWayCall, TBillValidatorEvent, TBvCommand, TDeviceType, TDriverNames } from "./apiTypes";
+import { IMessage, IMessageHandler, TApiOneWayCall, TApiTwoWayCall, TBillValidatorEvent, TBvCommand, TDeviceType, TDriverNames } from "./apiTypes";
 
 function MakeOneWayCall(payload:TApiOneWayCall):void{
     (window as any).electronAPI.oneWayCall(payload);
@@ -35,16 +35,13 @@ export interface ICommonReslult<TResult>{
 }
 
 class ApiWrapperClass{
+    messageHandlers:IMessageHandler[] = [];
     SetTitle(newTitle:string){
         MakeOneWayCall({method:'SetTitle',title:newTitle});
     }
     HW_CreateDevice(devType:TDeviceType,driverName:TDriverNames,arg:any){
         let result = MakeTwoWayCall({method:'CreateDevice',deviceType:devType,driverName:driverName,args:arg});
         return result;
-    }
-
-    BV_SubscribeOnOff(evName:TBillValidatorEvent, onOff:boolean){
-        this.HW_SubscibeOnOff('BillValidator',evName,onOff);
     }
 
     BV_Execute(bvCommand:TBvCommand){
@@ -72,18 +69,32 @@ class ApiWrapperClass{
         return result;
     }
 
+    SubscribeToMessages(handlerUid:string,handler:(message:IMessage)=>void){
+        if(this.messageHandlers.some(itm=>itm.handlerUid === handlerUid)){
+            this.UnsubscribeFromMessages(handlerUid);
+        }
+        this.messageHandlers.push({handlerUid:handlerUid,handler:handler});
+    }
 
-    HW_StartMessageTranslation(){
-        (window as any).electronAPI.onMainToRendererMessage(HanleMainToRendererMessage);        
+    UnsubscribeFromMessages(handlerUid:string){
+        let hndlr = this.messageHandlers.find(itm=>itm.handlerUid === handlerUid);
+        if (hndlr){
+            this.messageHandlers = this.messageHandlers.filter(itm=>itm.handlerUid != handlerUid);
+        }
     }
 }
 
+export const ApiWrapper = new ApiWrapperClass();
+
 (window as any).electronAPI.onMainToRendererMessage(HanleMainToRendererMessage); 
-function HanleMainToRendererMessage(payload:any){
-    console.log(payload);
+function HanleMainToRendererMessage(message:IMessage){
+    console.log(message);
+    ApiWrapper.messageHandlers.forEach(itm => {
+        itm.handler(message);
+    });
 }
 
-export const ApiWrapper = new ApiWrapperClass();
+
 
 // // async function test(){
 // //     let response = await ApiWrapper.GetProfile();
