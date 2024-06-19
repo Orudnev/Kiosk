@@ -194,7 +194,7 @@ function Indicator(props: IIndicator) {
 }
 
 interface IIndicatorWithResetButton extends IIndicator {
-    onReset:()=>any;
+    onReset: () => any;
 }
 function IndicatorWithResetButton(props: IIndicatorWithResetButton) {
     return (
@@ -205,7 +205,7 @@ function IndicatorWithResetButton(props: IIndicatorWithResetButton) {
             <div className='caption'>
                 {props.caption}
             </div>
-            <button onClick={()=>props.onReset()} className="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary css-1rwt2y5-MuiButtonBase-root-MuiButton-root" type="button">
+            <button onClick={() => props.onReset()} className="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary css-1rwt2y5-MuiButtonBase-root-MuiButton-root" type="button">
                 x
             </button>
         </div>
@@ -252,7 +252,7 @@ class StepBillValidatorClass extends StepBase<any, any> {
                 break;
             case 'Stacked':
                 console.log(message);
-                this.setState({lastBanknote:message.payload});
+                this.setState({ lastBanknote: message.payload });
                 break;
         }
     }
@@ -281,10 +281,12 @@ class StepBillValidatorClass extends StepBase<any, any> {
                             ApiWrapper.SubscribeToMessages(this.getHandlerMessageUid(), this.handleMessage);
                             setTimeout(() => {
                                 ApiWrapper.BV_Execute('Test').then((result) => {
-                                    if (result)
+                                    if (result) {
                                         this.setState({ checkStatus: 'connected' });
-                                    else
+                                    }
+                                    else {
                                         this.setState({ checkStatus: 'no-answer' });
+                                    }
                                 });
                             }, 1000);
                         })
@@ -305,13 +307,13 @@ class StepBillValidatorClass extends StepBase<any, any> {
                             }} />
                             <div>
                                 <Indicator caption='Status:' value={this.state.statusValue} className='bill-validator-status' />
-                                <IndicatorWithResetButton caption='Last banknote:' 
-                                    value={this.state.lastBanknote} 
-                                    className='bill-validator-last-banknote' 
-                                    onReset={()=>{
-                                        this.setState({lastBanknote:""});
+                                <IndicatorWithResetButton caption='Last banknote:'
+                                    value={this.state.lastBanknote}
+                                    className='bill-validator-last-banknote'
+                                    onReset={() => {
+                                        this.setState({ lastBanknote: "" });
                                     }}
-                                    /> 
+                                />
                             </div>
                         </div>
                     )

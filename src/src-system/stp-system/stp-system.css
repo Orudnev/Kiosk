@@ -86,13 +86,14 @@
     text-align: center;
     font-weight: 700;
     font-size: 20px;
+    width: 200px;
 }
 
 .indicator-with-reset-button button{
     display: block;
     position: absolute;
     top: 9px;
-    left: 152px;    
+    left: 130px;    
 }
 
 .indicator-with-reset-button .caption{
@@ -116,5 +117,5 @@
 }
 
 .bill-validator-last-banknote{
-    width: 200px;
+    width: 120px;
 }
