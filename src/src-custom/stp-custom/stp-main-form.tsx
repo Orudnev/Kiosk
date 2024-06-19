@@ -65,7 +65,7 @@ class StepMainFormClass extends StepBase<IStpMainFormProps, any> {
                     getThemeId={(currCriteria) => {
                         return currCriteria.type === 'RootItemsOnly' ? "root-items" : "default";
                     }}
-                    onItemSelected={(item)=>{
+                    onItemSelected={(item,hasChildren)=>{
                         let s = 1;
                     }}
                     onShownItemsChanged={(newCriteria)=>{

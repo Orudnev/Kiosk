@@ -26,7 +26,7 @@ export interface INavGalleryProps {
     dataSource?: INavGalleryItemDTO[];
     showItemsCriteria?: INavGalleryShowItemsCriteria;
     onShownItemsChanged?: (newCriteria: INavGalleryShowItemsCriteria) => void;
-    onItemSelected?: (item: INavGalleryItemDTO) => void;
+    onItemSelected?: (item: INavGalleryItemDTO,hasChildren:boolean) => void;
     getThemeId: (currCriteria: INavGalleryShowItemsCriteria) => string;
 }
 
@@ -168,7 +168,10 @@ export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: an
                 setItemsToBeShown(dataSource.filter(itm => !itm.parent));  // показываем только корневые элементы
                 break;
             case 'ByParentId':
-                setItemsToBeShown(dataSource.filter(itm => itm.parent === showItemsCriteria.value));
+                let newItemList = dataSource.filter(itm => itm.parent === showItemsCriteria.value);
+                if(newItemList && newItemList.length>0){
+                    setItemsToBeShown(newItemList);
+                }
                 break;
             case 'BySearchString':
                 setItemsToBeShown(dataSource.filter(itm => itm.caption?.toLowerCase().includes(showItemsCriteria.value.toLocaleLowerCase())));
@@ -240,7 +243,8 @@ export const NavGallery = forwardRef((props: INavGalleryProps, ngInstanceRef: an
                                 let newCriteria: INavGalleryShowItemsCriteria = { type: 'ByParentId', value: item.id };
                                 setDataSourceImpl(allItems, newCriteria);
                                 if(props.onItemSelected){
-                                    props.onItemSelected(item);
+                                    let hasChildren = allItems.some(itmc=>itmc.parent === item.id);
+                                    props.onItemSelected(item,hasChildren);
                                 }
                             }} />
                         );
