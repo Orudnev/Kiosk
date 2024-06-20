@@ -98,7 +98,7 @@ function App() {
       <Routes>
         {AllStepItems.map((itm: any, index) => {
           let props = itm.props; 
-          let url = `/${props.scnItem.props.scnUid}_${props.scnItem.props.scnItemUid}`;
+          let url = `/${itm.props.scnUid}_${itm.props.scnItemUid}`;
           return (<Route key={"route" + index} element={itm} path={url} />)
         })}
       </Routes>

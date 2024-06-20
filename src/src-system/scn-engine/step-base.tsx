@@ -5,19 +5,22 @@ import { GetIconClass, TLang } from '../../common-types';
 import { TScenarioUid, TScenarioItemUid } from '../../src-custom/scn-custom';
 import { ButtonBase } from '../../src-custom/components/button-base';
 import { TLButton, GetLocRes } from '../../localization';
-import { IScnItemBaseProps, ScnItemBase } from './scn-base';
+import AllStepItems from '../../src-custom/scn-custom';
 
 export interface IStepBaseProps<T> {
-    //scnUid: TScenarioUid;
-    //scnItemUid: TScenarioItemUid;
+    scnUid: TScenarioUid;
+    scnItemUid: TScenarioItemUid;
     stepTimeout?: number;
     messageId?: string; //2do заменить string на enum
     buttons?: string;
     btnFunc?: (jsxComponentContext: any) => string;
     messageFunc?: (JSXContext: any) => string;
     messageText?: string;
-    scnItem: ScnItemBase;
     extraProps?: T;
+    handleInit?:(jsxComponentContext: any) => void;
+    handleDidMount?:(jsxComponentContext: any) => void;
+    handleAnyButtonClick?:(jsxComponentContext: any,btnId:TLButton) => void;
+    handleKeyDown?:(jsxComponentContext: any,event:any) => void;
 }
 
 
@@ -30,21 +33,34 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
     renderDisabledButtonsMode: TRenderDisabledButtonMode = 'disable';
     constructor(props: IStepBaseProps<TExtraProps>) {
         super(props);
-        this.onAnyClick = this.onAnyClick.bind(this);
-        this.handleAnyClick = this.handleAnyClick.bind(this);
+        this._onAnyBtnClick = this._onAnyBtnClick.bind(this);
+        this.onAnyBtnClick = this.onAnyBtnClick.bind(this);
         this.handleTimerTick = this.handleTimerTick.bind(this);
-        this.props.scnItem.handleStepEvent('Init', this)
+        this.props.handleInit?.(this);
     }
 
     componentDidMount() {
         if (!this.disableTimeout) {
             this.startTimeout();
         }
-        this.props.scnItem.handleStepEvent('DidMount', this);
+        this.props.handleDidMount?.(this);
     }
 
-    handleAnyClick(btnId:TLButton) {
-        this.props.scnItem.launchInlineHandler('NavigateButtonClick',btnId);
+    onAnyBtnClick(btnId:TLButton) {
+        if(this.props.handleAnyButtonClick){
+            this.props.handleAnyButtonClick?.(this,btnId);
+        } else {
+            //Default behaviour
+            switch(btnId){
+                case 'btnBack':
+                    this.scn_goBack();
+                    break;
+                case 'btnHome':
+                    this.scn_goHome();
+                    break;
+                default:
+            }
+        }
     }
 
     handleTimerTick() {
@@ -69,11 +85,11 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         }
     }
 
-    onAnyClick(btnId:TLButton) {
+    _onAnyBtnClick(btnId:TLButton) {
         if (this.timerId) {
             this.resetTimeout();
         }
-        this.handleAnyClick(btnId);
+        this.onAnyBtnClick(btnId);
     }
 
     renderHeader(): JSX.Element {
@@ -106,7 +122,7 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
                 navBtn =
                     <ButtonBase
                         key={btnId}
-                        onClick={() => this.onAnyClick(btnId)}
+                        onClick={() => this._onAnyBtnClick(btnId)}
                         btnId={btnId} btnStyleType='nav-button'
                         getChildren={(pressed) => {
                             let imgClass = styleInfo?.imageClass;
@@ -202,5 +218,31 @@ export class StepBase<TExtraProps, TState> extends React.Component<IStepBaseProp
         );
     }
 
+    scn_getCurrScnItems():StepBase<any,any>[]{
+        let scnItems = AllStepItems.filter(itm=>{
+            const step = (itm as unknown) as StepBase<any,any>;
+            return (step.props.scnUid === this.props.scnUid);
+        }).map(itm=>{
+            const step = (itm as unknown) as StepBase<any,any>;
+            return step;                
+        });
+        return scnItems;
+    }
 
+    scn_goBack(){
+        let currScnItems = this.scn_getCurrScnItems();
+        let currItemIndex = currScnItems.findIndex(itm=>itm.props.scnItemUid === this.props.scnItemUid);
+        if(currItemIndex > -1){
+            let prevItemIndex = currItemIndex - 1;
+            if(prevItemIndex > -1){
+                let prevItem = currScnItems[prevItemIndex];
+                let url = `${prevItem.props.scnUid}_${prevItem.props.scnItemUid}`;
+                AppGlobal.navigate(url);
+            }
+        }
+    }
+
+    scn_goHome(){
+        AppGlobal.navigate('main_main');
+    }
 }

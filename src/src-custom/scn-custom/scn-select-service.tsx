@@ -1,6 +1,5 @@
 import React from 'react';
 import { StpMainForm } from '../stp-custom/stp-main-form';
-import { ScnItemBase } from '../../src-system/scn-engine/scn-base';
 import { ApiWrapper, ICommonReslult, IProfileItemDTO } from '../../apiwrapper';
 import { INavGalleryItemDTO } from '../components/NavGallery/NavGallery';
 import { TScenarioUid } from '.';
@@ -8,8 +7,12 @@ import { store } from '../reducers';
 import { AppGlobal } from '../../app';
 
 
+
+
+
 export const ScnSelectService: any[] = [
     (<StpMainForm 
+        scnUid='main' scnItemUid='main'
         btnFunc={(step: any) => {
             if (store.getState().StepProps.NavGalleryData.lastCriteria.type === 'RootItemsOnly') {
                 return "";
@@ -23,34 +26,29 @@ export const ScnSelectService: any[] = [
             }
             if(criteria.type === 'ByParentId'){
                 let currParent = store.getState().StepProps.NavGalleryData.items.find(itm=>itm.id === criteria.value);
-                if(currParent){
+                if(currParent && currParent.description){
                     return currParent.description;
                 } 
             }
+            return "";
         }}
         extraProps={{
             dataSource: () => store.getState().StepProps.NavGalleryData.items,
-            showItemsCriteria: () => store.getState().StepProps.NavGalleryData.lastCriteria
+            showItemsCriteria: () => store.getState().StepProps.NavGalleryData.lastCriteria,
+            handleItemSelected:(item:any,hasChildren:boolean)=>{
+                let s = item;
+                let s1 = hasChildren;
+            }
         }}
-        scnItem={new ScnItemBase({
-            scnUid: 'main',
-            scnItemUid: 'main',
-            inlineHandlers: [
-                {
-                    name: 'DidMount', handler: async (step) => {
-                        let serviceTree = await gItemTree();
-                        store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
-                    }
-                },
-                {
-                    name: 'KeyDown', handler: async (e)=>{
-                        if(e.ctrlKey && e.altKey && e.key.toLowerCase() == "s"){
-                            AppGlobal.navigate('config_main');
-                        }
-                    }
-                }
-            ]
-        })}
+        handleDidMount={async (self)=>{
+            let serviceTree = await gItemTree();
+            store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
+        }}
+        handleKeyDown={(self,e)=>{
+            if(e.ctrlKey && e.altKey && e.key.toLowerCase() == "s"){
+                AppGlobal.navigate('config_main');
+            }
+        }}
     />)
 ];
 

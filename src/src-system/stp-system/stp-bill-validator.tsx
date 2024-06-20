@@ -1,6 +1,6 @@
 import React, { useState, useEffect, MouseEventHandler } from 'react';
 import { connect } from 'react-redux';
-import { StepBase } from '../scn-engine/step-base';
+import { IStepBaseProps, StepBase } from '../scn-engine/step-base';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Button from '@mui/material/Button';
@@ -241,7 +241,7 @@ class StepBillValidatorClass extends StepBase<any, any> {
     }
 
     getHandlerMessageUid() {
-        let hndlrId = this.props.scnItem.props.scnUid + "_" + this.props.scnItem.props.scnItemUid;
+        let hndlrId = this.props.scnUid + "_" + this.props.scnItemUid;
         return hndlrId;
     }
 
@@ -328,4 +328,4 @@ function mapStateToProps(state: any, ownProps: any) {
     return { ...state.StepProps.NavGalleryData };
 }
 
-export const StpBillValidator = connect(mapStateToProps, {})(StepBillValidatorClass);
+export const StpBillValidator = connect<any,any,IStepBaseProps<any>>(mapStateToProps, {})(StepBillValidatorClass);

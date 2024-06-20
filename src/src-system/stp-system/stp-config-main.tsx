@@ -12,7 +12,7 @@ import { TLButton } from '../../localization';
 
 export interface IStpCfgMainProps {
     dataSource: () => INavGalleryItemDTO[];
-    showItemsCriteria: () => INavGalleryShowItemsCriteria;
+    showItemsCriteria?: () => INavGalleryShowItemsCriteria;
 }
 
 class StepCfgMainClass extends StepBase<IStpCfgMainProps, any> {
@@ -21,34 +21,17 @@ class StepCfgMainClass extends StepBase<IStpCfgMainProps, any> {
         super(props);
         this.ngref = createRef();
         this.SetNavGalleryDataSource = this.SetNavGalleryDataSource.bind(this);
-        this.handleKeyDown = this.handleKeyDown.bind(this);
     }
 
-    componentDidMount(): void {
-       super.componentDidMount(); 
-       document.addEventListener('keydown', this.handleKeyDown, true);
-    }
-
-    componentWillUnmount(): void {
-        document.removeEventListener('keydown',this.handleKeyDown);
-    }
-
-    handleKeyDown(e:any){
-        this.props.scnItem.handleStepEvent('KeyDown',e);
-    }
 
     SetNavGalleryDataSource(dataSource: INavGalleryItemDTO[]) {
         (this.ngref.current as INavGallery).SetDataSource(dataSource, { type: 'RootItemsOnly', value: '' });
     }
 
-    handleAnyClick(btnId: TLButton): void {
-        this.props.scnItem.handleStepEvent('NavigateButtonClick',btnId);
-    }
-
     renderButtonsInDisableMode() {
         if (this.props.extraProps) {
-            let lastCriteria = this.props.extraProps.showItemsCriteria();
-            if (lastCriteria.type !== 'RootItemsOnly') {
+            let lastCriteria = this.props.extraProps.showItemsCriteria?.();
+            if (lastCriteria?.type !== 'RootItemsOnly') {
                 return super.renderButtonsInDisableMode();
             }
         }
@@ -82,4 +65,4 @@ function mapStateToProps(state: any, ownProps: any) {
     return { ...state.StepProps.NavGalleryData };
 }
 
-export const StpCfgMain = connect(mapStateToProps, {})(StepCfgMainClass);
+export const StpCfgMain = connect<any,any,IStepBaseProps<IStpCfgMainProps>>(mapStateToProps, {})(StepCfgMainClass);

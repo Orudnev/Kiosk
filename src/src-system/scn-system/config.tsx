@@ -1,47 +1,48 @@
 import React from 'react';
 import { StpCfgMain } from '../stp-system/stp-config-main';
 import { StpBillValidator } from '../stp-system/stp-bill-validator';
-import { ScnItemBase } from '../scn-engine/scn-base';
 import { AppGlobal } from '../../app';
 import { INavGalleryItemDTO } from '../../src-custom/components/NavGallery/NavGallery';
 
 export const ScnConfig: any[] = [
     (<StpCfgMain 
-        buttons={'btnBack'}
+        scnUid='config'
+        scnItemUid='main'
+        buttons={'btnBack,btnHome'}
         messageText="Configuration"
         extraProps={{
-            dataSource: GetCfgItems,
-            showItemsCriteria: ()=>""
+            dataSource: GetCfgItems
         }}
-        scnItem={new ScnItemBase({
-            scnUid: 'config',
-            scnItemUid: 'main',
-            inlineHandlers: [
-                {
-                    name: 'DidMount', 
-                    handler: async (step) => {
-                        //let serviceTree = await gItemTree();
-                        //store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
-                    }
-                },
-                {
-                    name:'NavigateButtonClick',
-                    handler:(btnId)=>{
-                        AppGlobal.navigate('main_main');
-                    }
-                }
-            ]
-        })}
     />),
     (<StpBillValidator 
-        buttons={'btnBack'}
+        scnUid='config'
+        scnItemUid='billValidator'
+        buttons={'btnBack,btnHome'}
         messageText = "Bill Validator"
-        scnItem={new ScnItemBase({
-            scnUid:'config',
-            scnItemUid:'billValidator'
-        })}
     />)
 ];
+
+
+// scnItem={new ScnItemBase({
+//     scnUid: 'config',
+//     scnItemUid: 'main',
+//     inlineHandlers: [
+//         {
+//             name: 'DidMount', 
+//             handler: async (step) => {
+//                 //let serviceTree = await gItemTree();
+//                 //store.dispatch({ type: 'Act_SP_DefineServiceTreeItems', items: serviceTree });
+//             }
+//         },
+//         {
+//             name:'NavigateButtonClick',
+//             handler:(btnId)=>{
+//                 AppGlobal.navigate('main_main');
+//             }
+//         }
+//     ]
+// })}
+
 
 
 function GetCfgItems(){
